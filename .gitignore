@@ -1,0 +1,8 @@
+# ignore backups
+*~
+
+# ignore locks
+.\#*
+
+# ignore automate cache
+autom4te.cache
