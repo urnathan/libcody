@@ -9,9 +9,10 @@
 // CHECK-NEXT: ^Fa\'$
 // CHECK-NEXT: $EOF
 
-// RUN: <<+line-1 token:1
-// RUN: <<+'line 2'
-// RUN: <<-
+/* RUN: <<line-1 token:1 \
+   RUN: <<'line 2' \
+   RUN: <<
+*/
 // RUN: $subdir$stem |& ezio -p CHECK2 $src
 // CHECK2-NEXT: line:0 token:0 'line-1'
 // CHECK2-NEXT: line:0 token:1 'token:1'
@@ -38,8 +39,9 @@ int main (int, char *[])
 {
   MessageBuffer reader;
 
-  while (reader.Read (0) != -1)
-    continue;
+  while (int e = reader.Read (0))
+    if (e != EAGAIN && e != EINTR)
+      break;
 
   std::vector<std::string> tokens;
   for (unsigned line = 0; ; line++)

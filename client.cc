@@ -35,7 +35,6 @@ void ClientEnd::Cork ()
 
 int ClientEnd::DoTransaction ()
 {
-  int e = -1;
   if (direct)
     {
       std::swap (write, server->read);
@@ -45,26 +44,30 @@ int ClientEnd::DoTransaction ()
   else
     {
       // Write the write buffer
-      while (!(e = write.Write (fd_to)))
-	continue;
-      if (e < 0)
-	// Read the read buffer
-	while (!(e = read.Read (fd_from)))
-	  continue;
+      while (int e = write.Write (fd_to))
+	if (e != EAGAIN && e != EINTR)
+	  return e;
+      // Read the read buffer
+      while (int e = read.Read (fd_from))
+	if (e != EAGAIN && e != EINTR)
+	  return e;
     }
 
-  return e;
+  return 0;
 }
 
 Token ClientEnd::Connect (char const *agent, char const *ident,
 			  size_t alen, size_t ilen)
 {
+  write.BeginMessage ();
+  write.BeginLine ();
   write.AppendWord ("HELLO");
   char v[5];
   write.AppendWord (v, std::snprintf (v, sizeof (v), "%u", Version));
   write.AppendWord (agent, true, alen);
   write.AppendWord (ident, true, ilen);
-  write.Eom ();
+  write.EndLine ();
+  write.EndMessage ();
 
   int err = DoTransaction ();
   if (err > 0)

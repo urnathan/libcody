@@ -152,17 +152,26 @@ public:
   MessageBuffer &operator= (MessageBuffer &&) = default;
 
 public:
+  // Writing to a buffer
+  void BeginMessage ()
+  {
+    buffer.clear ();
+    lastBol = 0;
+  }
+  void EndMessage ()
+  {
+    buffer.push_back ('\n');
+    lastBol = 0;
+  }
+  void BeginLine ();
+  void EndLine () {}
+
   void Append (char const *str, bool maybe_quote = false,
 	       size_t len = ~size_t (0));
   void Space ()
   {
     Append (' ');
   }
-  void Eol ()
-  {
-    Append ('\n');
-  }
-  void Eom ();
   void AppendWord (char const *str, bool maybe_quote = false,
 		   size_t len = ~size_t (0))
   {
@@ -174,15 +183,15 @@ public:
 private:
   void Append (char c);
 
-  // FIXME: 0 on complete, -1 on try again or maybe EAGAIN?
 public:
+  // Reading from a bufer
   // -1 on end of messages, ERRNO on error, 0 on ok
   int Tokenize (std::vector<std::string> &);
 
 public:
-  // Read.  Return ERR on error, -1 on completion, 0 otherwise
+  // Read from fd.  Return ERR on error, EAGAIN on incompete, 0 on completion
   int Read (int fd) noexcept;
-  // Write to FD.  Return ERR on error, -1 on completion, 0 otherwise
+  // Write to FD.  Return ERR on error, EAGAIN on incompete, 0 on completion
   int Write (int fd) noexcept;
 };
 

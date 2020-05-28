@@ -7,8 +7,8 @@
 // RUN: $subdir$stem |& ezio $src
 // RUN-END:
 // CHECK-NEXT: ^bob 'frob dob''\n\80\\'$
-// CHECK-NEXT: ^+2$
-// CHECK-NEXT: ^-3$
+// CHECK-NEXT: ^2 \$
+// CHECK-NEXT: ^3$
 // CHECK-NEXT: $EOF
 
 // Cody
@@ -22,21 +22,32 @@ int main (int, char *[])
 {
   MessageBuffer writer;
 
+  writer.BeginMessage ();
+  writer.BeginLine ();
   writer.AppendWord ("bob");
   writer.AppendWord ("frob dob", true);
   writer.Append ("\n\x80\\", true);
-  writer.Eol ();
-  writer.Eom ();
-  while (!writer.Write (2))
-    continue;
+  writer.EndLine ();
+  writer.EndMessage ();
+  while (int err = writer.Write (2))
+    {
+      if (err != EAGAIN && err != EINTR)
+	break;
+    }
 
+  writer.BeginMessage ();
+  writer.BeginLine ();
   writer.Append ("2", true);
-  writer.Eol ();
+  writer.EndLine ();
+  writer.BeginLine ();
   writer.Append ("3", true);
-  writer.Eol ();
-  writer.Eom ();
-  while (!writer.Write (2))
-    continue;
+  writer.EndLine ();
+  writer.EndMessage ();
+  while (int err = writer.Write (2))
+    {
+      if (err != EAGAIN && err != EINTR)
+	break;
+    }
 
   return 0;
 }
