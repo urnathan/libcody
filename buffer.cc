@@ -12,6 +12,9 @@
 #include <unistd.h>
 #include <cerrno>
 
+// FIXME: Now I have quoting, I should think about continuation line
+// format -- trailing \ anyone?
+
 namespace Cody {
 
 // QUOTE means 'maybe quote', we search it for quote-needing chars

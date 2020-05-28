@@ -6,7 +6,7 @@ CXXFLAGS/ := -I $(srcdir)
 
 all:: libcody.a
 
-LIBCODY.O := $(addprefix ,basic.o buffer.o fatal.o server.o)
+LIBCODY.O := $(addprefix ,basic.o buffer.o client.o fatal.o server.o)
 libcody.a: $(LIBCODY.O)
 	$(AR) -cr $@ $^
 

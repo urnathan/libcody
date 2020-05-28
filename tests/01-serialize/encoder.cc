@@ -2,6 +2,8 @@
 // Copyright (C) 2020 Nathan Sidwell, nathan@acm.org
 // License: LGPL v3.0 or later
 
+// Test message encoding, both string quoting and continuation lines
+
 // RUN: $subdir$stem |& ezio $src
 // RUN-END:
 // CHECK-NEXT: ^bob 'frob dob''\n\80\\'$
@@ -16,13 +18,12 @@
 
 using namespace Cody;
 
-int main (int , char *[])
+int main (int, char *[])
 {
   MessageBuffer writer;
 
-  writer.Append ("bob");
-  writer.Space ();
-  writer.Append ("frob dob", true);
+  writer.AppendWord ("bob");
+  writer.AppendWord ("frob dob", true);
   writer.Append ("\n\x80\\", true);
   writer.Eol ();
   writer.Eom ();
