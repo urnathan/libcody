@@ -78,6 +78,20 @@ int Client::CommunicateWithServer ()
   return 0;
 }
 
+static Token UnrecognizedResponse (std::vector<std::string> const &words)
+{
+  std::string msg {"unrecognized response"};
+
+  for (auto iter = words.begin (); iter != words.end (); ++iter)
+    {
+      msg.append (" '");
+      msg.append (*iter);
+      msg.append ("'");
+    }
+  
+  return Token (Client::TC_ERROR, std::move (msg));
+}
+
 // HELLO $vernum $agent $ident
 Token Client::Connect (char const *agent, char const *ident,
 			  size_t alen, size_t ilen)
@@ -98,28 +112,17 @@ Token Client::Connect (char const *agent, char const *ident,
 // FIXME: 'REPO' does not belong here, it is module-specific.
 // We should send multiple lines in this handshake
 // Server should return some kind of flag or tuple set?
-// FIXME: Probably want some more helper functions
 Token ConnectResponse (std::vector<std::string> &words)
 {
-  auto &first = words[0];
-  if (first == "HELLO")
+  if (words[0] == "HELLO")
     {
       if (words.size () >= 4)
 	return Token (Client::TC_CONNECT, std::move (words[3]));
       else
 	return Token (Client::TC_CONNECT, std::move (std::string ("")));
     }
-  else if (first == "ERROR")
-    // FIXME: Error should be handled by dispatcher
-    {
-      return Token (Client::TC_ERROR, std::move (words[1]));
-    }
-  else
-    {
-      // Create error result
-    }
 
-  return Token (Client::TC_ERROR, std::string ("Wat?"));
+  return UnrecognizedResponse (words);
 }
 
 // MODULE-EXPORT $modulename
@@ -134,7 +137,6 @@ Token Client::ModuleExport (char const *module, size_t mlen)
 }
 
 // MODULE-IMPORT $modulename
-// FIXME: Merge with export
 Token Client::ModuleImport (char const *module, size_t mlen)
 {
   write.BeginLine ();
@@ -151,19 +153,9 @@ Token ModuleCMIResponse (std::vector<std::string> &words)
 {
   auto &first = words[0];
   if (first == "MODULE-CMI")
-    {
-      return Token (Client::TC_MODULE_CMI, std::move (words[1]));
-    }
-  else if (first == "ERROR")
-    {
-      return Token (Client::TC_ERROR, std::move (words[1]));
-    }
+    return Token (Client::TC_MODULE_CMI, std::move (words[1]));
   else
-    {
-      // Create error result
-    }
-
-  return Token (Client::TC_ERROR, std::string ("Wat?"));
+    return UnrecognizedResponse (words);
 }
 
 // MODULE-COMPILED $modulename
@@ -181,21 +173,10 @@ Token Client::ModuleCompiled (char const *module, size_t mlen)
 // ERROR 'text'
 Token ModuleCompiledResponse (std::vector<std::string> &words)
 {
-  auto &first = words[0];
-  if (first == "OK")
-    {
-      return Token (Client::TC_MODULE_COMPILED, 0);
-    }
-  else if (first == "ERROR")
-    {
-      return Token (Client::TC_ERROR, std::move (words[1]));
-    }
+  if (words[0] == "OK")
+    return Token (Client::TC_MODULE_COMPILED, 0);
   else
-    {
-      // Create error result
-    }
-
-  return Token (Client::TC_ERROR, std::string ("Wat?"));
+    return UnrecognizedResponse (words);
 }
 
 Token Client::IncludeTranslate (char const *include, size_t ilen)
@@ -213,26 +194,13 @@ Token Client::IncludeTranslate (char const *include, size_t ilen)
 // ERROR 'text'
 Token IncludeTranslateResponse (std::vector<std::string> &words)
 {
-  auto &first = words[0];
-  if (first == "INCLUDE-TEXT")
-    {
-      return Token (Client::TC_INCLUDE_TRANSLATE, 0);
-    }
-  if (first == "INCLUDE-IMPORT")
-    {
-      return Token (Client::TC_INCLUDE_TRANSLATE,
-		    std::move (words.size () > 1 ? words[1] : std::string ("")));
-    }
-  else if (first == "ERROR")
-    {
-      return Token (Client::TC_ERROR, words[1]);
-    }
+  if (words[0] == "INCLUDE-TEXT")
+    return Token (Client::TC_INCLUDE_TRANSLATE, 0);
+  else if (words[0] == "INCLUDE-IMPORT")
+    return Token (Client::TC_INCLUDE_TRANSLATE,
+		  std::move (words.size () > 1 ? words[1] : std::string ("")));
   else
-    {
-      // Create error result
-    }
-
-  return Token (Client::TC_ERROR, std::string ("Wat?"));
+    return UnrecognizedResponse (words);
 }
 
 Token Client::MaybeRequest (unsigned code)
@@ -248,25 +216,25 @@ Token Client::MaybeRequest (unsigned code)
   int err = CommunicateWithServer ();
   if (err > 0)
     {
-      // Diagnose error
+      err:
+      // FIXME: Turn into string
+      return Token (Client::TC_ERROR, err);
     }
-  else
-    {
-      std::vector<std::string> words;
 
-      err = read.Lex (words);
-      if (err != 0)
-	{
-	  // Create error result
-	}
-      else
-	// FIXME: Check ERROR here
-	{
-	  // FIXME: verify we're at the end of the message.
-	  return requestTable[code] (words);
-	}
-    }
-  return Token (Client::TC_ERROR, std::string ("Wat"));
+  std::vector<std::string> words;
+
+  err = read.Lex (words);
+  if (err != 0)
+    goto err;
+
+  Assert (!words.empty ());
+  if (words[0] == "ERROR")
+    return Token (Client::TC_ERROR,
+		  std::move (words.size () == 1 ? words[1]
+			     : "malformed error response"));
+
+  // FIXME: verify we're at the end of the message.
+  return requestTable[code] (words);
 }
 
 void Client::Cork ()

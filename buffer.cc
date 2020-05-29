@@ -205,7 +205,7 @@ int MessageBuffer::Lex (std::vector<std::string> &result)
   result.clear ();
 
  again:
-  int err = -1;
+  int err = ENOMSG;
   if (lastBol == buffer.size ())
     {
     out:

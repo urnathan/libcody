@@ -47,7 +47,7 @@ int main (int, char *[])
   for (unsigned line = 0; ; line++)
     {
       int e = reader.Lex (tokens);
-      if (e < 0)
+      if (e == ENOMSG)
 	break;
       if (e)
 	fprintf (stderr, "error:%s\n", strerror (e));
