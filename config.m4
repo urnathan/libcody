@@ -33,6 +33,23 @@ else
   AC_MSG_RESULT([not present])
 fi])
 
+AC_DEFUN([CODY_TOOLS],
+[AC_MSG_CHECKING([tools])
+AC_ARG_WITH([tools],
+AS_HELP_STRING([--with-tools=DIR],[tool directory]),
+if test "$withval" = "yes" ; then
+  AC_MSG_ERROR([tool location not specified])
+elif test "$withval" = "no" ; then
+  :
+elif ! test -d "${withval%/bin}/bin" ; then
+  AC_MSG_ERROR([tools not present])
+else
+  tools=${withval%/bin}/bin
+fi)
+AC_MSG_RESULT($tools)
+PATH=$tools${tools+:}$PATH
+AC_SUBST(tools)])
+
 AC_DEFUN([CODY_CXX_COMPILER],
 [AC_ARG_WITH([compiler],
 AS_HELP_STRING([--with-compiler=NAME],[which compiler to use]),

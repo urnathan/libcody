@@ -599,6 +599,7 @@ CPPFLAGS
 LDFLAGS
 CXXFLAGS
 CXX
+tools
 host_os
 host_vendor
 host_cpu
@@ -648,6 +649,7 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
+with_tools
 with_compiler
 with_bugurl
 enable_checking
@@ -1279,6 +1281,7 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-tools=DIR        tool directory
   --with-compiler=NAME    which compiler to use
   --with-bugurl=URL       where to report bugs
 
@@ -1781,6 +1784,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+
+
 ac_aux_dir=
 for ac_dir in build-aux "$srcdir"/build-aux; do
   if test -f "$ac_dir/install-sh"; then
@@ -1883,6 +1888,26 @@ IFS=$ac_save_IFS
 case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking tools" >&5
+$as_echo_n "checking tools... " >&6; }
+
+# Check whether --with-tools was given.
+if test "${with_tools+set}" = set; then :
+  withval=$with_tools; if test "$withval" = "yes" ; then
+  as_fn_error $? "tool location not specified" "$LINENO" 5
+elif test "$withval" = "no" ; then
+  :
+elif ! test -d "${withval%/bin}/bin" ; then
+  as_fn_error $? "tools not present" "$LINENO" 5
+else
+  tools=${withval%/bin}/bin
+fi
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $tools" >&5
+$as_echo "$tools" >&6; }
+PATH=$tools${tools+:}$PATH
 
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
