@@ -2,7 +2,7 @@
 # Copyright (C) 2020 Nathan Sidwell, nathan@acm.org
 # License: LGPL v3.0 or later
 
-AC_INIT([codylib],[0.0],[nathan@acm.org])
+AC_INIT([codylib],[0.0],[github.com/urnathan/libcody])
 AC_CONFIG_SRCDIR(README.md)
 m4_include(config.m4)
 
