@@ -8,6 +8,35 @@
 
 namespace Cody {
 
+// Queued requests
+enum RequestCode : char
+{
+  RC_CORK,
+  RC_CONNECT,
+  RC_MODULE_EXPORT,
+  RC_MODULE_IMPORT,
+  RC_MODULE_DONE,
+  RC_INCLUDE_TRANSLATE,
+  RC_HWM
+};
+
+// These do not need to be members
+static Token ConnectResponse (std::vector<std::string> &words);
+// static Token ModuleExportResponse (std::vector<std::string> &words);
+// static Token ModuleImportResponse (std::vector<std::string> &words);
+// static Token ModuleDoneResponse (std::vector<std::string> &words);
+// static Token IncludeTranslateResponse (std::vector<std::string> &words);
+
+// Must be consistently ordered with the RequestCode enum
+Token (*requestTable[RC_HWM]) (std::vector<std::string> &) = {
+  nullptr,
+  &ConnectResponse,
+  nullptr,
+  nullptr,
+  nullptr,
+  nullptr,
+};
+
 ClientEnd::ClientEnd ()
 {
   fd_from = fd_to = -1;
@@ -30,7 +59,7 @@ int ClientEnd::OpenFDs (int from, int to)
 void ClientEnd::Cork ()
 {
   if (corked.empty ())
-    corked.push_back (R_CORK);
+    corked.push_back (RC_CORK);
 }
 
 int ClientEnd::DoTransaction ()
@@ -59,7 +88,8 @@ int ClientEnd::DoTransaction ()
 Token ClientEnd::Connect (char const *agent, char const *ident,
 			  size_t alen, size_t ilen)
 {
-  write.BeginMessage ();
+  if (!IsCorked ())
+    write.BeginMessage ();
   write.BeginLine ();
   write.AppendWord ("HELLO");
   char v[5];
@@ -67,6 +97,46 @@ Token ClientEnd::Connect (char const *agent, char const *ident,
   write.AppendWord (agent, true, alen);
   write.AppendWord (ident, true, ilen);
   write.EndLine ();
+
+  return MaybeRequest (RC_CONNECT);
+}
+
+Token ConnectResponse (std::vector<std::string> &words)
+{
+  // HELLO VERSION AGENT <REPO>
+  // ERROR 'text'
+  // FIXME: 'REPO' does not belong here, it is module-specific.
+  // We should send multiple lines in this handshake
+  // Server should return some kind of flag or tuple set?
+  // FIXME: Probably want some more helper functions
+  auto &first = words[0];
+  if (first == "HELLO")
+    {
+      if (words.size () >= 4)
+	return Token (ClientEnd::TC_CONNECT, words[3]);
+      else
+	return Token (ClientEnd::TC_CONNECT, std::string (""));
+    }
+  else if (first == "ERROR")
+    {
+      return Token (ClientEnd::TC_ERROR, words[1]);
+    }
+  else
+    {
+      // Create error result
+    }
+
+  return Token (ClientEnd::TC_ERROR, std::string ("Wat?"));
+}
+
+Token ClientEnd::MaybeRequest (unsigned code)
+{
+  if (IsCorked ())
+    {
+      corked.push_back (code);
+      return Token (TC_CORKED);
+    }
+
   write.EndMessage ();
 
   int err = DoTransaction ();
@@ -76,42 +146,22 @@ Token ClientEnd::Connect (char const *agent, char const *ident,
     }
   else
     {
-      // HELLO VERSION AGENT <REPO>
-      // ERROR 'text'
-      // FIXME: 'REPO' does not belong here, it is module-specific.
-      // Server should return some kind of flag or tuple set?
-      std::vector<std::string> tokens;
+      std::vector<std::string> words;
 
-      // FIXME: Probably create a helper fn, once I figure what it
-      // should do
-      err = read.Tokenize (tokens);
+      err = read.Lex (words);
       if (err != 0)
 	{
 	  // Create error result
 	}
       else
 	{
-	  auto &first = tokens[0];
-	  if (first == "HELLO")
-	    {
-	      if (tokens.size () >= 4)
-		return Token (R_HELLO, tokens[3]);
-	      else
-		return Token (R_HELLO, std::string (""));
-	    }
-	  else if (first == "ERROR")
-	    {
-	      return Token (R_ERROR, tokens[1]);
-	    }
-	  else
-	    {
-	      // Create error result
-	    }
+	  // FIXME: verify we're at the end of the message.  Reset to
+	  // the beginning of a new message
+	  return requestTable[code] (words);
 	}
-      
     }
-
-  return Token (R_ERROR, std::string ("Wat?"));
+  return Token (ClientEnd::TC_ERROR, std::string ("Wat"));
 }
 
 }
+

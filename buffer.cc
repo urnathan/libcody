@@ -184,7 +184,7 @@ int MessageBuffer::Read (int fd)
   return more ? EAGAIN : 0;
 }
 
-int MessageBuffer::Tokenize (std::vector<std::string> &result)
+int MessageBuffer::Lex (std::vector<std::string> &result)
 {
   result.clear ();
 

@@ -152,6 +152,8 @@ public:
   MessageBuffer &operator= (MessageBuffer &&) = default;
 
 public:
+  // FIXME: it'd be nice if we could arange the ending state to be
+  // this already
   // Writing to a buffer
   void BeginMessage ()
   {
@@ -186,7 +188,7 @@ private:
 public:
   // Reading from a bufer
   // -1 on end of messages, ERRNO on error, 0 on ok
-  int Tokenize (std::vector<std::string> &);
+  int Lex (std::vector<std::string> &);
 
 public:
   // Read from fd.  Return ERR on error, EAGAIN on incompete, 0 on completion
@@ -217,30 +219,21 @@ public:
 class ClientEnd 
 {
 public:
-  enum Responses 
+  // Token codes
+  enum TokenCode
   {
-    R_CORKED,  // messages are corked
-    R_HELLO,
-    R_ERROR,   // token is error string
-    R_MODULE_REPO,   // token, if non-empty, is repo string
-    R_MODULE_CMI,    // token is CMI file
-    R_MODULE_TRANSLATE, // token is boolean, true for translation
+    TC_CORKED,  // messages are corked
+    TC_CONNECT,
+    TC_ERROR,   // token is error string
+    TC_MODULE_REPO,   // token, if non-empty, is repo string
+    TC_MODULE_CMI,    // token is CMI file
+    TC_MODULE_TRANSLATE, // token is boolean, true for translation
   };
   
 private:
-  enum Requests : char
-  {
-    R_CORK,
-    R_MODULE_EXPORT,
-    R_MODULE_IMPORT,
-    R_MODULE_DONE,
-    R_INCLUDE_TRANSLATE,
-  };
-
-private:
   MessageBuffer write;
   MessageBuffer read;
-  std::string corked;
+  std::string corked; // Queued request tags
   union
   {
     struct 
@@ -256,7 +249,7 @@ public:
   ClientEnd ();
   ~ClientEnd ();
   ClientEnd (ClientEnd &&) = default;
-  ClientEnd &operator=  (ClientEnd &&) = default;
+  ClientEnd &operator= (ClientEnd &&) = default;
 
 public:
   int OpenDirect (ServerEnd *);
@@ -274,7 +267,6 @@ public:
   }
 
 public:
-  // You will get a token back
   Token Connect (char const *agent, char const *ident,
 		 size_t alen = ~size_t (0), size_t ilen = ~size_t (0));
   Token Connect (std::string const &agent, std::string const &ident)
@@ -311,10 +303,16 @@ public:
 public:
   void Cork ();
   std::vector<Token> Uncork ();
+  bool IsCorked () const
+  {
+    return !corked.empty ();
+  }
 
 private:
+  Token MaybeRequest (unsigned code);
   int DoTransaction ();
   Token *ProcessLine ();
+
 };
 
 class Server

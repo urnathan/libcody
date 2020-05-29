@@ -46,7 +46,7 @@ int main (int, char *[])
   std::vector<std::string> tokens;
   for (unsigned line = 0; ; line++)
     {
-      int e = reader.Tokenize (tokens);
+      int e = reader.Lex (tokens);
       if (e < 0)
 	break;
       if (e)
