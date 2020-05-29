@@ -213,10 +213,10 @@ public:
 
 public:
 
-  friend class ClientEnd;
+  friend class Client;
 };
 
-class ClientEnd 
+class Client 
 {
 public:
   // Token codes
@@ -246,10 +246,10 @@ private:
   bool direct = false;
 
 public:
-  ClientEnd ();
-  ~ClientEnd ();
-  ClientEnd (ClientEnd &&) = default;
-  ClientEnd &operator= (ClientEnd &&) = default;
+  Client ();
+  ~Client ();
+  Client (Client &&) = default;
+  Client &operator= (Client &&) = default;
 
 public:
   int OpenDirect (ServerEnd *);

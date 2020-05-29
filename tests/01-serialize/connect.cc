@@ -21,7 +21,7 @@ using namespace Cody;
 
 int main (int, char *[])
 {
-  ClientEnd client;
+  Client client;
 
   client.OpenFDs (0, 1);
   auto token = client.Connect ("TEST", "IDENT");

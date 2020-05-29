@@ -37,17 +37,17 @@ Token (*requestTable[RC_HWM]) (std::vector<std::string> &) = {
   nullptr,
 };
 
-ClientEnd::ClientEnd ()
+Client::Client ()
 {
   fd_from = fd_to = -1;
 }
 
-ClientEnd::~ClientEnd ()
+Client::~Client ()
 {
   // FIXME: Disconnect?
 }
 
-int ClientEnd::OpenFDs (int from, int to)
+int Client::OpenFDs (int from, int to)
 {
   Assert (!direct && fd_from < 0 && fd_to < 0);
   fd_from = from;
@@ -56,13 +56,13 @@ int ClientEnd::OpenFDs (int from, int to)
   return 0;
 }
 
-void ClientEnd::Cork ()
+void Client::Cork ()
 {
   if (corked.empty ())
     corked.push_back (RC_CORK);
 }
 
-int ClientEnd::DoTransaction ()
+int Client::DoTransaction ()
 {
   if (direct)
     {
@@ -85,7 +85,7 @@ int ClientEnd::DoTransaction ()
   return 0;
 }
 
-Token ClientEnd::Connect (char const *agent, char const *ident,
+Token Client::Connect (char const *agent, char const *ident,
 			  size_t alen, size_t ilen)
 {
   if (!IsCorked ())
@@ -113,23 +113,23 @@ Token ConnectResponse (std::vector<std::string> &words)
   if (first == "HELLO")
     {
       if (words.size () >= 4)
-	return Token (ClientEnd::TC_CONNECT, words[3]);
+	return Token (Client::TC_CONNECT, words[3]);
       else
-	return Token (ClientEnd::TC_CONNECT, std::string (""));
+	return Token (Client::TC_CONNECT, std::string (""));
     }
   else if (first == "ERROR")
     {
-      return Token (ClientEnd::TC_ERROR, words[1]);
+      return Token (Client::TC_ERROR, words[1]);
     }
   else
     {
       // Create error result
     }
 
-  return Token (ClientEnd::TC_ERROR, std::string ("Wat?"));
+  return Token (Client::TC_ERROR, std::string ("Wat?"));
 }
 
-Token ClientEnd::MaybeRequest (unsigned code)
+Token Client::MaybeRequest (unsigned code)
 {
   if (IsCorked ())
     {
@@ -160,7 +160,7 @@ Token ClientEnd::MaybeRequest (unsigned code)
 	  return requestTable[code] (words);
 	}
     }
-  return Token (ClientEnd::TC_ERROR, std::string ("Wat"));
+  return Token (Client::TC_ERROR, std::string ("Wat"));
 }
 
 }
