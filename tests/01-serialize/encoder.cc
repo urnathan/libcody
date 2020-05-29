@@ -22,27 +22,27 @@ int main (int, char *[])
 {
   MessageBuffer writer;
 
-  writer.BeginMessage ();
   writer.BeginLine ();
   writer.AppendWord ("bob");
   writer.AppendWord ("frob dob", true);
   writer.Append ("\n\x80\\", true);
   writer.EndLine ();
-  writer.EndMessage ();
+
+  writer.PrepareToSend ();
   while (int err = writer.Write (2))
     {
       if (err != EAGAIN && err != EINTR)
 	break;
     }
 
-  writer.BeginMessage ();
   writer.BeginLine ();
   writer.Append ("2", true);
   writer.EndLine ();
   writer.BeginLine ();
   writer.Append ("3", true);
   writer.EndLine ();
-  writer.EndMessage ();
+
+  writer.PrepareToSend ();
   while (int err = writer.Write (2))
     {
       if (err != EAGAIN && err != EINTR)

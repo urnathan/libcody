@@ -138,12 +138,25 @@ int MessageBuffer::Write (int fd)
 {
   size_t limit = buffer.size () - lastBol;
   ssize_t count = write (fd, &buffer.data ()[lastBol], limit);
-  
-  if (count < 0)
-    return errno;
 
-  lastBol += count;
-  return size_t (count) == limit ? 0 : EAGAIN;
+  int err = 0;
+  if (count < 0)
+    err = errno;
+  else
+    {
+      lastBol += count;
+      if (size_t (count) != limit)
+	err = EAGAIN;
+    }
+
+  if (err != EAGAIN && err != EINTR)
+    {
+      // Reset for next message
+      buffer.clear ();
+      lastBol = 0;
+    }
+
+  return err;
 }
 
 int MessageBuffer::Read (int fd)
@@ -176,9 +189,12 @@ int MessageBuffer::Read (int fd)
 	break;
 
       if (!more)
-	// There is no continuation, but there are chars after the
-	// newline.
-	return EINVAL;
+	{
+	  // There is no continuation, but there are chars after the
+	  // newline.  Truncate the buffer and return an error
+	  buffer.resize (buffer.begin () - iter);
+	  return EINVAL;
+	}
     }
 
   return more ? EAGAIN : 0;

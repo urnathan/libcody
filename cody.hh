@@ -16,12 +16,17 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
+
+// FIXME: Should I PIMPL this?
+
 namespace Cody {
 
 constexpr unsigned Version = 0;
 
 class Token
 {
+public:
+  enum Category { INTEGER, STRING, VECTOR};
 private:
   // std:variant is a C++17 thing
   union
@@ -30,7 +35,6 @@ private:
     std::string string;
     std::vector<std::string> vector;
   };
-  enum Category { Int, String, Vector};
   Category cat : 2;
 
 private:
@@ -38,19 +42,19 @@ private:
 
 public:
   Token (unsigned c, size_t i = 0)
-    : integer (i), cat (Int), code (c)
+    : integer (i), cat (INTEGER), code (c)
   {
   }
   Token (unsigned c, std::string &&s)
-    : string (std::move (s)), cat (String), code (c)
+    : string (std::move (s)), cat (STRING), code (c)
   {
   }
   Token (unsigned c, std::string const &s)
-    : string (s), cat (String), code (c)
+    : string (s), cat (STRING), code (c)
   {
   }
   Token (unsigned c, std::vector<std::string> &&v)
-    : vector (std::move (v)), cat (Vector), code (c)
+    : vector (std::move (v)), cat (VECTOR), code (c)
   {
   }
   // No non-move constructor from a vector.  You should not be doing
@@ -78,13 +82,13 @@ private:
   {
     switch (cat)
       {
-      case String:
+      case STRING:
 	// Silly scope destructor name rules
 	using S = std::string;
 	string.~S ();
 	break;
 
-      case Vector:
+      case VECTOR:
 	using V = std::vector<std::string>;
 	vector.~V ();
 	break;
@@ -98,11 +102,11 @@ private:
     code = t.code;
     switch (cat)
       {
-      case String:
+      case STRING:
 	new (&string) std::string (std::move (t.string));
 	break;
 
-      case Vector:
+      case VECTOR:
 	new (&vector) std::vector<std::string> (std::move (t.vector));
 	break;
 
@@ -117,7 +121,10 @@ public:
   {
     return code;
   }
-
+  Category GetCategory () const
+  {
+    return cat;
+  }
   size_t GetInteger () const
   {
     return integer;
@@ -152,19 +159,13 @@ public:
   MessageBuffer &operator= (MessageBuffer &&) = default;
 
 public:
-  // FIXME: it'd be nice if we could arange the ending state to be
-  // this already
-  // Writing to a buffer
-  void BeginMessage ()
-  {
-    buffer.clear ();
-    lastBol = 0;
-  }
-  void EndMessage ()
+  void PrepareToSend ()
   {
     buffer.push_back ('\n');
     lastBol = 0;
   }
+
+public:
   void BeginLine ();
   void EndLine () {}
 
@@ -225,9 +226,12 @@ public:
     TC_CORKED,  // messages are corked
     TC_CONNECT,
     TC_ERROR,   // token is error string
+    // FIXME: Next is not implemented yet
     TC_MODULE_REPO,   // token, if non-empty, is repo string
     TC_MODULE_CMI,    // token is CMI file
-    TC_MODULE_TRANSLATE, // token is boolean, true for translation
+    TC_MODULE_COMPILED, // Module compilation ack
+    TC_INCLUDE_TRANSLATE, // token is boolean false for text or
+			  // (possibly empty) string for CMI
   };
   
 private:
@@ -288,10 +292,10 @@ public:
     return ModuleImport (s.c_str (), s.size ());
   }
 
-  Token ModuleDone (char const *str, size_t len = ~size_t (0));
-  Token ModuleDone (std::string const &s)
+  Token ModuleCompiled (char const *str, size_t len = ~size_t (0));
+  Token ModuleCompiled (std::string const &s)
   {
-    return ModuleDone (s.c_str (), s.size ());
+    return ModuleCompiled (s.c_str (), s.size ());
   }
 
   Token IncludeTranslate (char const *str, size_t len = ~size_t (0));
@@ -310,7 +314,7 @@ public:
 
 private:
   Token MaybeRequest (unsigned code);
-  int DoTransaction ();
+  int CommunicateWithServer ();
   Token *ProcessLine ();
 
 };
