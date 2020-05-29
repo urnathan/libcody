@@ -13,8 +13,6 @@
 
 // Cody
 #include "cody.hh"
-// C
-#include <cstdlib>
 
 using namespace Cody;
 
@@ -28,12 +26,10 @@ int main (int, char *[])
   writer.Append ("\n\x80\\", true);
   writer.EndLine ();
 
-  writer.PrepareToSend ();
+  writer.PrepareToWrite ();
   while (int err = writer.Write (2))
-    {
-      if (err != EAGAIN && err != EINTR)
-	break;
-    }
+    if (err != EAGAIN && err != EINTR)
+      break;
 
   writer.BeginLine ();
   writer.Append ("2", true);
@@ -42,12 +38,10 @@ int main (int, char *[])
   writer.Append ("3", true);
   writer.EndLine ();
 
-  writer.PrepareToSend ();
+  writer.PrepareToWrite ();
   while (int err = writer.Write (2))
-    {
-      if (err != EAGAIN && err != EINTR)
-	break;
-    }
+    if (err != EAGAIN && err != EINTR)
+      break;
 
   return 0;
 }

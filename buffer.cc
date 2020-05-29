@@ -204,15 +204,9 @@ int MessageBuffer::Lex (std::vector<std::string> &result)
 {
   result.clear ();
 
- again:
   int err = ENOMSG;
-  if (lastBol == buffer.size ())
-    {
-    out:
-      buffer.clear ();
-      lastBol = 0;
-      return err;
-    }
+  if (IsAtEnd ())
+    return ENOMSG;
 
   Assert (buffer.back () == '\n');
 
@@ -262,9 +256,10 @@ int MessageBuffer::Lex (std::vector<std::string> &result)
 		  result.clear ();
 		  iter = std::find (iter, buffer.end (), '\n');
 		  result.emplace_back (&buffer[lastBol],
-				       iter - buffer.begin () + lastBol);
-		  err = EINVAL;
-		  goto out;
+				       iter - buffer.begin () - lastBol);
+		  ++iter;
+		  lastBol = iter - buffer.begin ();
+		  return EINVAL;
 		}
 
 	      if (c < ' ' || c >= 0x7f)
@@ -336,7 +331,7 @@ int MessageBuffer::Lex (std::vector<std::string> &result)
     }
   lastBol = iter - buffer.begin ();
   if (result.empty ())
-    goto again;
+    return ENOMSG;
 
   return 0;
 }

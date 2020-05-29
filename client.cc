@@ -57,6 +57,8 @@ int Client::OpenFDs (int from, int to)
 
 int Client::CommunicateWithServer ()
 {
+  write.PrepareToWrite ();
+  read.PrepareToRead ();
   if (direct)
     {
       std::swap (write, server->read);
@@ -203,6 +205,11 @@ Token IncludeTranslateResponse (std::vector<std::string> &words)
     return UnrecognizedResponse (words);
 }
 
+
+// Token Client::Response (unsigned code, bool isLast, int commError)
+//{}
+
+
 Token Client::MaybeRequest (unsigned code)
 {
   if (IsCorked ())
@@ -211,21 +218,17 @@ Token Client::MaybeRequest (unsigned code)
       return Token (TC_CORKED);
     }
 
-  write.PrepareToSend ();
-
   int err = CommunicateWithServer ();
   if (err > 0)
     {
-      err:
       // FIXME: Turn into string
       return Token (Client::TC_ERROR, err);
     }
 
   std::vector<std::string> words;
 
-  err = read.Lex (words);
-  if (err != 0)
-    goto err;
+  if (read.Lex (words))
+    return UnrecognizedResponse (words);
 
   Assert (!words.empty ());
   if (words[0] == "ERROR")
@@ -251,7 +254,6 @@ std::vector<Token> Client::Uncork ()
     // Nothing to do
     return result;
 
-  write.PrepareToSend ();
   int err = CommunicateWithServer ();
   if (err > 0)
     {

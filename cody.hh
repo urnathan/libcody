@@ -159,9 +159,14 @@ public:
   MessageBuffer &operator= (MessageBuffer &&) = default;
 
 public:
-  void PrepareToSend ()
+  void PrepareToWrite ()
   {
     buffer.push_back ('\n');
+    lastBol = 0;
+  }
+  void PrepareToRead ()
+  {
+    buffer.clear ();
     lastBol = 0;
   }
 
@@ -188,8 +193,12 @@ private:
 
 public:
   // Reading from a bufer
-  // -1 on end of messages, ERRNO on error, 0 on ok
+  // ERRNO on error (including at end), 0 on ok
   int Lex (std::vector<std::string> &);
+  bool IsAtEnd () const
+  {
+    return lastBol == buffer.size ();
+  }
 
 public:
   // Read from fd.  Return ERR on error, EAGAIN on incompete, 0 on completion
