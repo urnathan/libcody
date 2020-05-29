@@ -4,7 +4,8 @@
 
 // Cody
 #include "internal.hh"
-
+// C
+#include <cstring>
 
 namespace Cody {
 
@@ -13,6 +14,7 @@ enum RequestCode : char
 {
   RC_CORK,
   RC_CONNECT,
+  RC_MODULE_REPO,
   RC_MODULE_EXPORT,
   RC_MODULE_IMPORT,
   RC_MODULE_COMPILED,
@@ -22,6 +24,7 @@ enum RequestCode : char
 
 // These do not need to be members
 static Token ConnectResponse (std::vector<std::string> &words);
+static Token ModuleRepoResponse (std::vector<std::string> &words);
 static Token ModuleCMIResponse (std::vector<std::string> &words);
 static Token ModuleCompiledResponse (std::vector<std::string> &words);
 static Token IncludeTranslateResponse (std::vector<std::string> &words);
@@ -30,6 +33,7 @@ static Token IncludeTranslateResponse (std::vector<std::string> &words);
 Token (*requestTable[RC_HWM]) (std::vector<std::string> &) = {
   nullptr,
   &ConnectResponse,
+  &ModuleRepoResponse,
   &ModuleCMIResponse,
   &ModuleCMIResponse,
   &ModuleCompiledResponse,
@@ -94,6 +98,82 @@ static Token UnrecognizedResponse (std::vector<std::string> const &words)
   return Token (Client::TC_ERROR, std::move (msg));
 }
 
+static Token CommunicationError (int err)
+{
+  std::string e {"communication error:"};
+  e.append (strerror (err));
+
+  return Token (Client::TC_ERROR, std::move (e));
+}
+
+Token Client::ProcessResponse (std::vector<std::string> &words,
+			       unsigned code, bool isLast)
+{
+  if (read.Lex (words))
+    return UnrecognizedResponse (words);
+
+  Assert (!words.empty ());
+  if (words[0] == "ERROR")
+    return Token (Client::TC_ERROR,
+		  std::move (words.size () == 1 ? words[1]
+			     : "malformed error response"));
+
+  if (isLast && !read.IsAtEnd ())
+    return Token (Client::TC_ERROR, std::string ("unexpected extra response"));
+
+  Assert (code < RC_HWM);
+  return requestTable[code] (words);
+}
+
+Token Client::MaybeRequest (unsigned code)
+{
+  if (IsCorked ())
+    {
+      corked.push_back (code);
+      return Token (TC_CORKED);
+    }
+
+  if (int err = CommunicateWithServer ())
+    return CommunicationError (err);
+
+  std::vector<std::string> words;
+  return ProcessResponse(words, code, true);
+}
+
+void Client::Cork ()
+{
+  if (corked.empty ())
+    corked.push_back (RC_CORK);
+}
+
+std::vector<Token> Client::Uncork ()
+{
+  std::vector<Token> result;
+
+  if (corked.size () > 1)
+    {
+      if (int err = CommunicateWithServer ())
+	result.emplace_back (CommunicationError (err));
+      else
+	{
+	  std::vector<std::string> words;
+	  for (auto iter = corked.begin () + 1; iter != corked.end ();)
+	    {
+	      char code = *iter;
+	      ++iter;
+	      result.emplace_back (ProcessResponse (words, code,
+						    iter == corked.end ()));
+	    }
+	}
+    }
+
+  corked.clear ();
+
+  return result;
+}
+
+// Now the individual message handlers
+
 // HELLO $vernum $agent $ident
 Token Client::Connect (char const *agent, char const *ident,
 			  size_t alen, size_t ilen)
@@ -109,19 +189,38 @@ Token Client::Connect (char const *agent, char const *ident,
   return MaybeRequest (RC_CONNECT);
 }
 
-// HELLO VERSION AGENT <REPO>
-// ERROR 'text'
-// FIXME: 'REPO' does not belong here, it is module-specific.
-// We should send multiple lines in this handshake
-// Server should return some kind of flag or tuple set?
+// HELLO VERSION AGENT
 Token ConnectResponse (std::vector<std::string> &words)
 {
-  if (words[0] == "HELLO")
+  if (words[0] == "HELLO" && words.size () == 3)
     {
-      if (words.size () >= 4)
-	return Token (Client::TC_CONNECT, std::move (words[3]));
-      else
-	return Token (Client::TC_CONNECT, std::move (std::string ("")));
+      // I suppose at some point I may need to pay attention to the
+      // version information
+      std::vector<std::string> response;
+      response.emplace_back (std::move (words[1]));
+      response.emplace_back (std::move (words[2]));
+      return Token (Client::TC_CONNECT, std::move (response));
+    }
+
+  return UnrecognizedResponse (words);
+}
+
+// MODULE-REPO
+Token Client::ModuleRepo ()
+{
+  write.BeginLine ();
+  write.AppendWord ("MODULE-REPO");
+  write.EndLine ();
+
+  return MaybeRequest (RC_MODULE_REPO);
+}
+
+// MODULE-REPO $dir
+Token ModuleRepoResponse (std::vector<std::string> &words)
+{
+  if (words[0] == "MODULE-REPO" && words.size () == 2)
+    {
+      return Token (Client::TC_MODULE_REPO, std::move (words[1]));
     }
 
   return UnrecognizedResponse (words);
@@ -150,11 +249,9 @@ Token Client::ModuleImport (char const *module, size_t mlen)
 }
 
 // MODULE-CMI $cmifile
-// ERROR 'text'
 Token ModuleCMIResponse (std::vector<std::string> &words)
 {
-  auto &first = words[0];
-  if (first == "MODULE-CMI")
+  if (words[0] == "MODULE-CMI" && words.size () == 2)
     return Token (Client::TC_MODULE_CMI, std::move (words[1]));
   else
     return UnrecognizedResponse (words);
@@ -172,7 +269,6 @@ Token Client::ModuleCompiled (char const *module, size_t mlen)
 }
 
 // OK
-// ERROR 'text'
 Token ModuleCompiledResponse (std::vector<std::string> &words)
 {
   if (words[0] == "OK")
@@ -193,93 +289,15 @@ Token Client::IncludeTranslate (char const *include, size_t ilen)
 
 // INCLUDE-TEXT
 // INCLUDE-IMPORT $cmifile?
-// ERROR 'text'
 Token IncludeTranslateResponse (std::vector<std::string> &words)
 {
-  if (words[0] == "INCLUDE-TEXT")
+  if (words[0] == "INCLUDE-TEXT" && words.size () == 1)
     return Token (Client::TC_INCLUDE_TRANSLATE, 0);
-  else if (words[0] == "INCLUDE-IMPORT")
+  else if (words[0] == "INCLUDE-IMPORT" && words.size () <= 2)
     return Token (Client::TC_INCLUDE_TRANSLATE,
 		  std::move (words.size () > 1 ? words[1] : std::string ("")));
   else
     return UnrecognizedResponse (words);
-}
-
-
-// Token Client::Response (unsigned code, bool isLast, int commError)
-//{}
-
-
-Token Client::MaybeRequest (unsigned code)
-{
-  if (IsCorked ())
-    {
-      corked.push_back (code);
-      return Token (TC_CORKED);
-    }
-
-  int err = CommunicateWithServer ();
-  if (err > 0)
-    {
-      // FIXME: Turn into string
-      return Token (Client::TC_ERROR, err);
-    }
-
-  std::vector<std::string> words;
-
-  if (read.Lex (words))
-    return UnrecognizedResponse (words);
-
-  Assert (!words.empty ());
-  if (words[0] == "ERROR")
-    return Token (Client::TC_ERROR,
-		  std::move (words.size () == 1 ? words[1]
-			     : "malformed error response"));
-
-  // FIXME: verify we're at the end of the message.
-  return requestTable[code] (words);
-}
-
-void Client::Cork ()
-{
-  if (corked.empty ())
-    corked.push_back (RC_CORK);
-}
-
-std::vector<Token> Client::Uncork ()
-{
-  std::vector<Token> result;
-
-  if (corked.empty ())
-    // Nothing to do
-    return result;
-
-  int err = CommunicateWithServer ();
-  if (err > 0)
-    {
-      // Diagnose error, maybe read buffer?
-    }
-  else
-    {
-      for (auto iter = corked.begin () + 1; iter != corked.end (); ++iter)
-	{
-	  std::vector<std::string> words;
-
-	  err = read.Lex (words);
-	  if (err != 0)
-	    {
-	      // error result
-	    }
-	  else
-	    // Check ERROR here
-	    result.emplace_back (requestTable[unsigned (*iter)] (words));
-	}
-    }
-  
-  // Verify we're at end of message.  Reset to beginning of new message
-  corked.clear ();
-
-  return result;
 }
 
 

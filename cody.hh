@@ -235,7 +235,6 @@ public:
     TC_CORKED,  // messages are corked
     TC_CONNECT,
     TC_ERROR,   // token is error string
-    // FIXME: Next is not implemented yet
     TC_MODULE_REPO,   // token, if non-empty, is repo string
     TC_MODULE_CMI,    // token is CMI file
     TC_MODULE_COMPILED, // Module compilation ack
@@ -289,6 +288,8 @@ public:
   }
 
 public:
+  Token ModuleRepo ();
+		 
   Token ModuleExport (char const *str, size_t len = ~size_t (0));
   Token ModuleExport (std::string const &s)
   {
@@ -322,10 +323,9 @@ public:
   }
 
 private:
+  Token ProcessResponse (std::vector<std::string> &, unsigned code, bool isLast);
   Token MaybeRequest (unsigned code);
   int CommunicateWithServer ();
-  Token *ProcessLine ();
-
 };
 
 class Server

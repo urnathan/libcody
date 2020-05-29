@@ -1,6 +1,6 @@
 
 // Test client connection handshake
-// RUN: <<HELLO 0 TESTING REPO
+// RUN: <<HELLO 0 TESTING
 // RUN: $subdir$stem | ezio -p OUT $src |& ezio -p ERR $src
 // RUN-END:
 
@@ -8,7 +8,8 @@
 // OUT-NEXT:$EOF
 
 // ERR-NEXT:Code:{:[0-9]+}$
-// ERR-NEXT:Repo:REPO$
+// ERR-NEXT:Version:0$
+// ERR-NEXT:Agent:TESTING$
 // ERR-NEXT:$EOF
 
 
@@ -27,6 +28,8 @@ int main (int, char *[])
   auto token = client.Connect ("TEST", "IDENT");
 
   std::cerr << "Code:" << token.GetCode () << '\n';
-  std::cerr << "Repo:" << token.GetString () << '\n';
+  auto const &v = token.GetVector ();
+  std::cerr << "Version:" << v[0] << '\n';
+  std::cerr << "Agent:" << v[1] << '\n';
   
 }

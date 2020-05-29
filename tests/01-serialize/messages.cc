@@ -1,7 +1,8 @@
 
 // Test message round tripping
 /*
-  RUN: <<HELLO 0 TESTING REPO \
+  RUN: <<HELLO 0 TESTING \
+  RUN: <<MODULE-REPO REPO \
   RUN: <<MODULE-CMI biz/bar \
   RUN: <<MODULE-CMI blob \
   RUN: <<INCLUDE-TEXT \
@@ -13,6 +14,7 @@
 
 /*
   OUT-NEXT:^HELLO {:[0-9]+} TEST IDENT \$
+  OUT-NEXT:^MODULE-REPO \
   OUT-NEXT:^MODULE-EXPORT bar \
   OUT-NEXT:^MODULE-IMPORT foo \
   OUT-NEXT:^INCLUDE-TRANSLATE baz.frob \
@@ -22,6 +24,9 @@
 // OUT-NEXT:$EOF
 
 // ERR-NEXT:Code:1$
+// ERR-NEXT:Vector[0]:0$
+// ERR-NEXT:Vector[1]:TESTING$
+// ERR-NEXT:Code:3$
 // ERR-NEXT:String:REPO$
 // ERR-NEXT:Code:4$
 // ERR-NEXT:String:biz/bar$
@@ -52,6 +57,8 @@ int main (int, char *[])
   client.Cork ();
   if (client.Connect ("TEST", "IDENT").GetCode () != Client::TC_CORKED)
     std::cerr << "Not corked!\n";
+  if (client.ModuleRepo ().GetCode () != Client::TC_CORKED)
+    std::cerr << "Not corked!\n";
   if (client.ModuleExport ("bar").GetCode () != Client::TC_CORKED)
     std::cerr << "Not corked!\n";
   if (client.ModuleImport ("foo").GetCode () != Client::TC_CORKED)
@@ -76,7 +83,11 @@ int main (int, char *[])
 	  std::cerr << "String:" << iter->GetString () << '\n';
 	  break;
 	case Token::VECTOR:
-	  std::cerr << "Vector:?" << '\n';
+	  {
+	    auto const &v = iter->GetVector ();
+	    for (unsigned ix = 0; ix != v.size (); ix++)
+	      std::cerr << "Vector[" << ix << "]:" << v[ix] << '\n';
+	  }
 	  break;
 	}
     }
