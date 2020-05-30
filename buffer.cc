@@ -83,8 +83,7 @@ void MessageBuffer::Append (char const *str, bool quote, size_t len)
 	for (e = str; e != end; ++e)
 	  {
 	    unsigned char c = (unsigned char)*e;
-	    if (c < ' ' || c >= 0x7f
-		|| c == '\\' || c == '\'')
+	    if (c < ' ' || c == 0x7f || c == '\\' || c == '\'')
 	      break;
 	  }
       buffer.insert (buffer.end (), str, e);

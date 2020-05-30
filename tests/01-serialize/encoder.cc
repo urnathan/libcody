@@ -6,7 +6,8 @@
 
 // RUN: $subdir$stem |& ezio $src
 // RUN-END:
-// CHECK-NEXT: ^bob 'frob dob''\n\80\\'$
+// The ¯ is utf8-encoded as c2 af
+// CHECK-NEXT: ^bob 'frob dob''\n¯\\'$
 // CHECK-NEXT: ^2 \$
 // CHECK-NEXT: ^3$
 // CHECK-NEXT: $EOF
@@ -23,7 +24,7 @@ int main (int, char *[])
   writer.BeginLine ();
   writer.AppendWord ("bob");
   writer.AppendWord ("frob dob", true);
-  writer.Append ("\n\x80\\", true);
+  writer.Append ("\n\xc2\xaf\\", true);
   writer.EndLine ();
 
   writer.PrepareToWrite ();
