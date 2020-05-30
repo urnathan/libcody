@@ -1,5 +1,5 @@
 
-// Test message round tripping
+// Test client message round tripping
 /*
   RUN: <<HELLO 0 TESTING \
   RUN: <<MODULE-REPO REPO \
@@ -76,13 +76,13 @@ int main (int, char *[])
       std::cerr << "Code:" << iter->GetCode () << '\n';
       switch (iter->GetCategory ())
 	{
-	case Token::INTEGER:
+	case Packet::INTEGER:
 	  std::cerr << "Integer:" << iter->GetInteger () << '\n';
 	  break;
-	case Token::STRING:
+	case Packet::STRING:
 	  std::cerr << "String:" << iter->GetString () << '\n';
 	  break;
-	case Token::VECTOR:
+	case Packet::VECTOR:
 	  {
 	    auto const &v = iter->GetVector ();
 	    for (unsigned ix = 0; ix != v.size (); ix++)

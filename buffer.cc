@@ -216,7 +216,7 @@ int MessageBuffer::Lex (std::vector<std::string> &result)
       char c = *iter;
 
       ++iter;
-      if (c == ' ')
+      if (c == ' ' || c == '\t')
 	{
 	  word = nullptr;
 	  continue;
@@ -254,8 +254,11 @@ int MessageBuffer::Lex (std::vector<std::string> &result)
 		malformed:;
 		  result.clear ();
 		  iter = std::find (iter, buffer.end (), '\n');
+		  auto back = iter;
+		  if (back[-1] == '\\'  && back[-2] == ' ')
+		    back -= 2;
 		  result.emplace_back (&buffer[lastBol],
-				       iter - buffer.begin () - lastBol);
+				       back - buffer.begin () - lastBol);
 		  ++iter;
 		  lastBol = iter - buffer.begin ();
 		  return EINVAL;
