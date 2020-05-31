@@ -83,7 +83,7 @@ void MessageBuffer::Append (char const *str, bool quote, size_t len)
 	for (e = str; e != end; ++e)
 	  {
 	    unsigned char c = (unsigned char)*e;
-	    if (c < ' ' || c == 0x7f || c == '\\' || c == '\'')
+	    if (c <= ' ' || c == 0x7f || c == '\\' || c == '\'')
 	      break;
 	  }
       buffer.insert (buffer.end (), str, e);
@@ -131,6 +131,12 @@ void MessageBuffer::Append (char const *str, bool quote, size_t len)
 void MessageBuffer::Append (char c)
 {
   buffer.push_back (c);
+}
+
+void MessageBuffer::AppendInteger (unsigned u)
+{
+  std::string v (std::to_string (u));
+  AppendWord (v);
 }
 
 int MessageBuffer::Write (int fd)
@@ -191,7 +197,7 @@ int MessageBuffer::Read (int fd)
 	{
 	  // There is no continuation, but there are chars after the
 	  // newline.  Truncate the buffer and return an error
-	  buffer.resize (buffer.begin () - iter);
+	  buffer.resize (iter - buffer.begin ());
 	  return EINVAL;
 	}
     }
@@ -336,6 +342,22 @@ int MessageBuffer::Lex (std::vector<std::string> &result)
     return ENOMSG;
 
   return 0;
+}
+
+void MessageBuffer::LexedLine (std::string &str)
+{
+  if (lastBol)
+    {
+      size_t pos = lastBol - 1;
+      for (; pos; pos--)
+	if (buffer[pos-1] == '\n')
+	  break;
+
+      size_t end = lastBol - 1;
+      if (buffer[end-1] == '\\' && buffer[end-2] == ' ')
+	end -= 2;
+      str.append (&buffer[pos], end - pos);
+    }
 }
 
 }

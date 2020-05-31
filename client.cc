@@ -17,14 +17,15 @@ static Packet ModuleCompiledResponse (std::vector<std::string> &words);
 static Packet IncludeTranslateResponse (std::vector<std::string> &words);
 
 // Must be consistently ordered with the RequestCode enum
-Packet (*requestTable[RC_HWM]) (std::vector<std::string> &) = {
-  &ConnectResponse,
-  &ModuleRepoResponse,
-  &ModuleCMIResponse,
-  &ModuleCMIResponse,
-  &ModuleCompiledResponse,
-  &IncludeTranslateResponse,
-};
+static Packet (*const responseTable[RC_HWM]) (std::vector<std::string> &) =
+  {
+    &ConnectResponse,
+    &ModuleRepoResponse,
+    &ModuleCMIResponse,
+    &ModuleCMIResponse,
+    &ModuleCompiledResponse,
+    &IncludeTranslateResponse,
+  };
 
 Client::Client ()
 {
@@ -75,45 +76,51 @@ int Client::CommunicateWithServer ()
   return 0;
 }
 
-static Packet UnrecognizedResponse (std::vector<std::string> const &words)
-{
-  std::string msg {"unrecognized response"};
-
-  for (auto iter = words.begin (); iter != words.end (); ++iter)
-    {
-      msg.append (" '");
-      msg.append (*iter);
-      msg.append ("'");
-    }
-  
-  return Packet (Client::TC_ERROR, std::move (msg));
-}
-
 static Packet CommunicationError (int err)
 {
   std::string e {"communication error:"};
   e.append (strerror (err));
 
-  return Packet (Client::TC_ERROR, std::move (e));
+  return Packet (Client::PC_ERROR, std::move (e));
 }
 
 Packet Client::ProcessResponse (std::vector<std::string> &words,
 			       unsigned code, bool isLast)
 {
-  if (read.Lex (words))
-    return UnrecognizedResponse (words);
+  if (int e = read.Lex (words))
+    {
+      if (e == EINVAL)
+	{
+	  std::string msg ("malformed string '");
+	  msg.append (words[0]);
+	  msg.push_back ('\'');
+	  return Packet (Client::PC_ERROR, std::move (msg));
+	}
+      else
+	return Packet (Client::PC_ERROR, "missing response");
+    }
 
   Assert (!words.empty ());
   if (words[0] == "ERROR")
-    return Packet (Client::TC_ERROR,
+    return Packet (Client::PC_ERROR,
 		  std::move (words.size () == 1 ? words[1]
 			     : "malformed error response"));
 
   if (isLast && !read.IsAtEnd ())
-    return Packet (Client::TC_ERROR, std::string ("unexpected extra response"));
+    return Packet (Client::PC_ERROR, std::string ("unexpected extra response"));
 
   Assert (code < RC_HWM);
-  return requestTable[code] (words);
+  Packet result (responseTable[code] (words));
+  if (result.GetCode () == Client::PC_ERROR && result.GetString ().empty ())
+    {
+      std::string msg {"malformed response '"};
+
+      read.LexedLine (msg);
+      msg.push_back ('\'');
+      result.GetString () = std::move (msg);
+    }
+
+  return result;
 }
 
 Packet Client::MaybeRequest (unsigned code)
@@ -121,7 +128,7 @@ Packet Client::MaybeRequest (unsigned code)
   if (IsCorked ())
     {
       corked.push_back (code);
-      return Packet (TC_CORKED);
+      return Packet (PC_CORKED);
     }
 
   if (int err = CommunicateWithServer ())
@@ -171,8 +178,7 @@ Packet Client::Connect (char const *agent, char const *ident,
 {
   write.BeginLine ();
   write.AppendWord ("HELLO");
-  char v[5];
-  write.AppendWord (v, std::snprintf (v, sizeof (v), "%u", Version));
+  write.AppendInteger (Version);
   write.AppendWord (agent, true, alen);
   write.AppendWord (ident, true, ilen);
   write.EndLine ();
@@ -188,10 +194,10 @@ Packet ConnectResponse (std::vector<std::string> &words)
       // I suppose at some point I may need to pay attention to the
       // version information
       words.erase (words.begin ());
-      return Packet (Client::TC_CONNECT, std::move (words));
+      return Packet (Client::PC_CONNECT, std::move (words));
     }
 
-  return UnrecognizedResponse (words);
+  return Packet (Client::PC_ERROR, "");
 }
 
 // MODULE-REPO
@@ -209,10 +215,10 @@ Packet ModuleRepoResponse (std::vector<std::string> &words)
 {
   if (words[0] == "MODULE-REPO" && words.size () == 2)
     {
-      return Packet (Client::TC_MODULE_REPO, std::move (words[1]));
+      return Packet (Client::PC_MODULE_REPO, std::move (words[1]));
     }
 
-  return UnrecognizedResponse (words);
+  return Packet (Client::PC_ERROR, "");
 }
 
 // MODULE-EXPORT $modulename
@@ -241,9 +247,9 @@ Packet Client::ModuleImport (char const *module, size_t mlen)
 Packet ModuleCMIResponse (std::vector<std::string> &words)
 {
   if (words[0] == "MODULE-CMI" && words.size () == 2)
-    return Packet (Client::TC_MODULE_CMI, std::move (words[1]));
+    return Packet (Client::PC_MODULE_CMI, std::move (words[1]));
   else
-    return UnrecognizedResponse (words);
+    return Packet (Client::PC_ERROR, "");
 }
 
 // MODULE-COMPILED $modulename
@@ -261,9 +267,9 @@ Packet Client::ModuleCompiled (char const *module, size_t mlen)
 Packet ModuleCompiledResponse (std::vector<std::string> &words)
 {
   if (words[0] == "OK")
-    return Packet (Client::TC_MODULE_COMPILED, 0);
+    return Packet (Client::PC_MODULE_COMPILED, 0);
   else
-    return UnrecognizedResponse (words);
+    return Packet (Client::PC_ERROR, "");
 }
 
 Packet Client::IncludeTranslate (char const *include, size_t ilen)
@@ -277,20 +283,16 @@ Packet Client::IncludeTranslate (char const *include, size_t ilen)
 }
 
 // INCLUDE-TEXT
-// INCLUDE-IMPORT $cmifile?
+// INCLUDE-IMPORT
+// MODULE-CMI $cmifile
 Packet IncludeTranslateResponse (std::vector<std::string> &words)
 {
   if (words[0] == "INCLUDE-TEXT" && words.size () == 1)
-    return Packet (Client::TC_INCLUDE_TRANSLATE, 0);
-  else if (words[0] == "INCLUDE-IMPORT" && words.size () <= 2)
-    {
-      if (words.size () == 1)
-	return Packet (Client::TC_INCLUDE_TRANSLATE, 1);
-      else
-	return Packet (Client::TC_INCLUDE_TRANSLATE, std::move (words[1]));
-    }
+    return Packet (Client::PC_INCLUDE_TRANSLATE, 0);
+  else if (words[0] == "INCLUDE-IMPORT" && words.size () == 1)
+    return Packet (Client::PC_INCLUDE_TRANSLATE, 1);
   else
-    return UnrecognizedResponse (words);
+    return ModuleCMIResponse (words);
 }
 
 

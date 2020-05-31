@@ -8,26 +8,38 @@
   RUN:<<NOT A COMMAND \
   RUN:<<INCLUDE-TRANSLATE baz.frob \
   RUN:<<INCLUDE-TRANSLATE ./quux \
-  RUN:<<MODULE-COMPILED bar
+  RUN:<<MODULE-COMPILED bar \
+  RUN:<<MODULE-IMPORT ''
 */
-// RUN: $subdir$stem | ezio -p OUT $src |& ezio -p ERR $src
-// RUN-END:
+// RUN: $subdir$stem | ezio -p OUT1 $src |& ezio -p ERR1 $src
 
 // These all fail because there's nothing in the server interpretting stuff
 /*
-  OUT-NEXT: ^ERROR 'unknown request'	\
-  OUT-NEXT: ^ERROR 'unknown request'	\
-  OUT-NEXT: ^ERROR 'unknown request'	\
-  OUT-NEXT: ^ERROR 'unknown request'	\
-  OUT-NEXT: ^ERROR 'unrecognized request 
-  OUT-NEXT: ^ERROR 'unknown request'	\
-  OUT-NEXT: ^ERROR 'unknown request'	\
-  OUT-NEXT: ^ERROR 'unknown request'
+  OUT1-NEXT: ^HELLO 0 default	\
+  OUT1-NEXT: ^MODULE-REPO gcm.cache	\
+  OUT1-NEXT: ^MODULE-CMI bar.gcm	\
+  OUT1-NEXT: ^MODULE-CMI foo.gcm	\
+  OUT1-NEXT: ^ERROR 'unrecognized\20request\20
+  OUT1-NEXT: ^INCLUDE-TEXT	\
+  OUT1-NEXT: ^INCLUDE-TEXT	\
+  OUT1-NEXT: ^OK
+  OUT1-NEXT: ^ERROR 'malformed\20request\20
 */
-// OUT-NEXT:$EOF
+// OUT1-NEXT:$EOF
+// ERR1-NEXT:$EOF
 
-// ERR-NEXT:$EOF
+/*
+  RUN:<<HELLO 0 TEST IDENT
+  RUN:<<MODULE-REPO
+*/
+// RUN: $subdir$stem | ezio -p OUT2 $src |& ezio -p ERR2 $src
+/*
+  OUT2-NEXT: ^HELLO 0 default
+*/
+// OUT2-NEXT:$EOF
+// ERR2-NEXT:$EOF
 
+// RUN-END:
 
 // Cody
 #include "cody.hh"
@@ -39,14 +51,15 @@ using namespace Cody;
 int main (int, char *[])
 {
   Server server (0, 1);
+  Resolver r;
 
   while (int e = server.Read ())
     if (e != EAGAIN && e != EINTR)
       break;
 
-  if (server.ParseRequests ())
-    server.ProcessRequests ();
-  server.WriteResponses ();
+  if (server.ParseRequests (&r))
+    std::cerr << "requests deferred\n";
+  server.PrepareToWrite ();
 
   while (int e = server.Write ())
     if (e != EAGAIN && e != EINTR)

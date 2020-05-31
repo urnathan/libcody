@@ -6,7 +6,8 @@
   RUN: <<MODULE-CMI biz/bar \
   RUN: <<MODULE-CMI blob \
   RUN: <<INCLUDE-TEXT \
-  RUN: << INCLUDE-IMPORT foo \
+  RUN: << INCLUDE-IMPORT \
+  RUN: << MODULE-CMI foo \
   RUN: <<OK
 */
 // RUN: $subdir$stem | ezio -p OUT $src |& ezio -p ERR $src
@@ -18,6 +19,7 @@
   OUT-NEXT:^MODULE-EXPORT bar \
   OUT-NEXT:^MODULE-IMPORT foo \
   OUT-NEXT:^INCLUDE-TRANSLATE baz.frob \
+  OUT-NEXT:^INCLUDE-TRANSLATE ./corge \
   OUT-NEXT:^INCLUDE-TRANSLATE ./quux \
   OUT-NEXT:^MODULE-COMPILED bar
 */
@@ -35,6 +37,8 @@
 // ERR-NEXT:Code:6$
 // ERR-NEXT:Integer:0$
 // ERR-NEXT:Code:6$
+// ERR-NEXT:Integer:1$
+// ERR-NEXT:Code:4$
 // ERR-NEXT:String:foo
 // ERR-NEXT:Code:5$
 // ERR-NEXT:Integer:
@@ -55,19 +59,21 @@ int main (int, char *[])
   client.OpenFDs (0, 1);
 
   client.Cork ();
-  if (client.Connect ("TEST", "IDENT").GetCode () != Client::TC_CORKED)
+  if (client.Connect ("TEST", "IDENT").GetCode () != Client::PC_CORKED)
     std::cerr << "Not corked!\n";
-  if (client.ModuleRepo ().GetCode () != Client::TC_CORKED)
+  if (client.ModuleRepo ().GetCode () != Client::PC_CORKED)
     std::cerr << "Not corked!\n";
-  if (client.ModuleExport ("bar").GetCode () != Client::TC_CORKED)
+  if (client.ModuleExport ("bar").GetCode () != Client::PC_CORKED)
     std::cerr << "Not corked!\n";
-  if (client.ModuleImport ("foo").GetCode () != Client::TC_CORKED)
+  if (client.ModuleImport ("foo").GetCode () != Client::PC_CORKED)
     std::cerr << "Not corked!\n";
-  if (client.IncludeTranslate ("baz.frob").GetCode () != Client::TC_CORKED)
+  if (client.IncludeTranslate ("baz.frob").GetCode () != Client::PC_CORKED)
     std::cerr << "Not corked!\n";
-  if (client.IncludeTranslate ("./quux").GetCode () != Client::TC_CORKED)
+  if (client.IncludeTranslate ("./corge").GetCode () != Client::PC_CORKED)
     std::cerr << "Not corked!\n";
-  if (client.ModuleCompiled ("bar").GetCode () != Client::TC_CORKED)
+  if (client.IncludeTranslate ("./quux").GetCode () != Client::PC_CORKED)
+    std::cerr << "Not corked!\n";
+  if (client.ModuleCompiled ("bar").GetCode () != Client::PC_CORKED)
     std::cerr << "Not corked!\n";
 
   auto result = client.Uncork ();

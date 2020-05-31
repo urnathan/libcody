@@ -201,6 +201,7 @@ public:
   {
     AppendWord (str.data (), maybe_quote, str.size ());
   }
+  void AppendInteger (unsigned u);
 
 private:
   void Append (char c);
@@ -209,6 +210,8 @@ public:
   // Reading from a bufer
   // ERRNO on error (including at end), 0 on ok
   int Lex (std::vector<std::string> &);
+  // string_view is a C++17 thing, so this is awkward
+  void LexedLine (std::string &);
   bool IsAtEnd () const
   {
     return lastBol == buffer.size ();
@@ -241,13 +244,13 @@ public:
   // Packet codes
   enum PacketCode
   {
-    TC_CORKED,  // messages are corked
-    TC_CONNECT,
-    TC_ERROR,   // token is error string
-    TC_MODULE_REPO,   // token, if non-empty, is repo string
-    TC_MODULE_CMI,    // token is CMI file
-    TC_MODULE_COMPILED, // Module compilation ack
-    TC_INCLUDE_TRANSLATE, // token is boolean false for text or
+    PC_CORKED,  // messages are corked
+    PC_CONNECT,
+    PC_ERROR,   // token is error string
+    PC_MODULE_REPO,   // token, if non-empty, is repo string
+    PC_MODULE_CMI,    // token is CMI file
+    PC_MODULE_COMPILED, // Module compilation ack
+    PC_INCLUDE_TRANSLATE, // token is boolean false for text or
 			  // (possibly empty) string for CMI
   };
   
@@ -336,43 +339,110 @@ public:
   }
 
 private:
-  Packet ProcessResponse (std::vector<std::string> &, unsigned code, bool isLast);
+  Packet ProcessResponse (std::vector<std::string> &, unsigned code,
+			  bool isLast);
   Packet MaybeRequest (unsigned code);
   int CommunicateWithServer ();
 };
 
+class Resolver 
+{
+public:
+  virtual ~Resolver ();
+
+public:
+  virtual void ErrorResponse (Server *, std::string &&msg);
+  virtual bool ConnectRequest (Server *, unsigned version,
+			       std::string &agent, std::string &ident);
+  virtual bool ModuleRepoRequest (Server *);
+  virtual bool ModuleExportRequest (Server *, std::string &module);
+  virtual bool ModuleImportRequest (Server *, std::string &module);
+  virtual bool ModuleCompiledRequest (Server *, std::string &module);
+  virtual bool IncludeTranslateRequest (Server *, std::string &include);
+};
 
 class Server
 {
 private:
   MessageBuffer write;
   MessageBuffer read;
-  std::vector<Packet> requests;
-  int fd_from = -1;
-  int fd_to = -1;
+  union
+  {
+    struct
+    {
+      int fd_from;
+      int fd_to;
+    };
+    Resolver *direct;
+  };
   bool writing = false;
-  unsigned pendingRequests;
 
+private:
+  Server ();
 public:
-  Server (int from = -1, int to = -1);
+  Server (int from, int to = -1)
+    : Server ()
+  {
+    fd_from = from;
+    fd_to = to >= 0 ? to : from;
+  }
+  
+  Server (Resolver *r)
+    : Server ()
+  {
+    direct = r;
+  }
   ~Server ();
   Server (Server &&) = default;
   Server &operator= (Server &&) = default;
 
 public:
   void DirectProcess (MessageBuffer &from, MessageBuffer &to);
-  bool ParseRequests ();
-  void WriteResponses ();
-  virtual void ProcessRequests ();
+  bool ParseRequests (Resolver *);
+
+public:
+  void ErrorResponse (char const *error, size_t elen = ~size_t (0));
+  void ErrorResponse (std::string const &error)
+  {
+    ErrorResponse (error.data (), error.size ());
+  }
+  // FIXME: some kind of printf/ostream error variant?
+  void OKResponse ();
+
+public:
+  void ConnectResponse (char const *agent, size_t alen = ~size_t (0));
+  void ConnectResponse (std::string const &agent)
+  {
+    ConnectResponse (agent.data (), agent.size ());
+  }
+  void ModuleRepoResponse (char const *repo, size_t rlen = ~size_t (0));
+  void ModuleRepoResponse (std::string const &repo)
+  {
+    ModuleRepoResponse (repo.data (), repo.size ());
+  }
+  void ModuleCMIResponse (char const *cmi, size_t clen = ~size_t (0));
+  void ModuleCMIResponse (std::string const &cmi)
+  {
+    ModuleCMIResponse (cmi.data (), cmi.size ());
+  }
+  void IncludeTranslateResponse (bool xlate);
 
 public:
   int Write ()
   {
     return write.Write (fd_to);
   }
+  void PrepareToWrite ()
+  {
+    write.PrepareToWrite ();
+  }
   int Read ()
   {
     return read.Read (fd_from);
+  }
+  void PrepareToRead ()
+  {
+    write.PrepareToRead ();
   }
 };
 

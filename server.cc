@@ -7,8 +7,35 @@
 
 namespace Cody {
 
-Server::Server (int from, int to)
-  : fd_from (from), fd_to (to)
+// These do not need to be members
+static int ConnectRequest (Server *, Resolver *,
+			   std::vector<std::string> &words);
+static int ModuleRepoRequest (Server *, Resolver *,
+			      std::vector<std::string> &words);
+static int ModuleExportRequest (Server *, Resolver *,
+				std::vector<std::string> &words);
+static int ModuleImportRequest (Server *, Resolver *,
+				std::vector<std::string> &words);
+static int ModuleCompiledRequest (Server *, Resolver *,
+				  std::vector<std::string> &words);
+static int IncludeTranslateRequest (Server *, Resolver *,
+				    std::vector<std::string> &words);
+
+
+static std::tuple<char const *,
+		  int (*) (Server *, Resolver *, std::vector<std::string> &)>
+  const requestTable[RC_HWM] =
+  {
+    // Same order as enum RequestCode
+    {"HELLO", ConnectRequest},
+    {"MODULE-REPO", ModuleRepoRequest},
+    {"MODULE-EXPORT", ModuleExportRequest},
+    {"MODULE-IMPORT", ModuleImportRequest},
+    {"MODULE-COMPILED", ModuleCompiledRequest},
+    {"INCLUDE-TRANSLATE", IncludeTranslateRequest},
+  };
+
+Server::Server ()
 {
 }
 
@@ -20,140 +47,154 @@ Server::~Server ()
 void Server::DirectProcess (MessageBuffer &from, MessageBuffer &to)
 {
   std::swap (read, from);
-  ParseRequests ();
-  if (pendingRequests)
-    ProcessRequests ();
-  WriteResponses ();
+  if (ParseRequests (direct))
+    {} // FIXME: Something wrong
+  write.PrepareToWrite ();
   std::swap (to, write);
 }
 
-void Server::ProcessRequests ()
+bool Server::ParseRequests (Resolver *resolver)
 {
-  for (auto iter = requests.begin (); iter != requests.end (); iter++)
-    if (!iter->IsDone ())
-      {
-	*iter = Packet (RC_HWM, "unknown request");
-	iter->SetDone ();
-	pendingRequests--;
-      }
-}
-
-bool Server::ParseRequests ()
-{
-  struct Request
-  {
-    char const *word;
-    unsigned min_args;
-    unsigned max_args;
-  };
-  Request const requestForms[]=
-    {
-      // Same order as enum RequestCode
-      {"HELLO", 2, 3},
-      {"MODULE-REPO", 0, 0},
-      {"MODULE-EXPORT", 1, 1},
-      {"MODULE-IMPORT", 1, 1},
-      {"MODULE-COMPILED", 1, 1},
-      {"INCLUDE-TRANSLATE", 1, 1},
-      {nullptr, 0, 0}
-    };
-
   std::vector<std::string> words;
+  bool deferred = false;
 
   while (!read.IsAtEnd ())
     {
+      bool found = false;
       if (!read.Lex (words))
 	{
 	  Assert (!words.empty ());
-	  for (auto *ptr = requestForms; ptr->word; ++ptr)
-	    if (words.size () > ptr->min_args
-		&& words.size () <= ptr->max_args + 1
-		&& words[0] == ptr->word)
+	  for (unsigned ix = RC_HWM; ix--;)
+	    if (words[0] == std::get<0> (requestTable[ix]))
 	      {
-		unsigned code = ptr - requestForms;
-		switch (ptr->max_args)
+		int res = std::get<1> (requestTable[ix]) (this, resolver, words);
+		if (res < 0)
 		  {
-		  default:
-		    words.erase (words.begin ());
-		    requests.emplace_back (Packet (code, std::move (words)));
-		    break;
-
-		  case 1:
-		    requests.emplace_back (Packet (code, words[0]));
-		    break;
-
-		  case 0:
-		    requests.emplace_back (Packet (code, 0));
+		    found = true;
 		    break;
 		  }
-		pendingRequests++;
+
+		if (res > 0)
+		  deferred = true;
 		goto found;
 	      }
 	}
+
       {
-	std::string msg {"unrecognized request"};
-	for (auto iter = words.begin (); iter != words.end (); ++iter)
-	  {
-	    msg.append (" '");
-	    msg.append (*iter);
-	    msg.append ("'");
-	  }
-	requests.emplace_back (Packet (RC_HWM, std::move (msg)));
-	requests.back ().SetDone ();
+	std::string msg {found ? "malformed" : "unrecognized"};
+
+	msg.append (" request '");
+	read.LexedLine (msg);
+	msg.push_back ('\'');
+	resolver->ErrorResponse (this, std::move (msg));
       }
     found:;
     }
 
-  return pendingRequests != 0;
+  return deferred;
 }
 
-void Server::WriteResponses ()
+int ConnectRequest (Server *s, Resolver *r, std::vector<std::string> &words)
 {
-  for (auto iter = requests.begin (); iter != requests.end (); ++iter)
-    {
-      write.BeginLine ();
-      switch (iter->GetCode ())
-	{
-	case RC_CONNECT:
-	  {
-	    write.AppendWord ("HELLO");
-	    auto &vec = iter->GetVector ();
-	    for (auto word = vec.begin (); word != vec.end (); ++word)
-	      write.AppendWord (*word, true);
-	  }
-	  break;
+  if (words.size () < 3 || words.size () > 4)
+    return -1;
+  if (words.size () == 3)
+    words.emplace_back ("");
+  char *eptr;
+  unsigned long version = strtoul (words[1].c_str (), &eptr, 10);
+  if (*eptr)
+    return -1;
 
-	case RC_MODULE_REPO:
-	case RC_MODULE_EXPORT:
-	case RC_MODULE_IMPORT:
-	  write.AppendWord ("MODULE-CMI");
-	  write.AppendWord (iter->GetString (), true);
-	  break;
+  return r->ConnectRequest (s, unsigned (version), words[2], words[3]);
+}
 
-	case RC_MODULE_COMPILED:
-	  write.AppendWord ("OK");
-	  break;
+int ModuleRepoRequest (Server *s, Resolver *r,std::vector<std::string> &words)
+{
+  if (words.size () != 1)
+    return -1;
 
-	case RC_INCLUDE_TRANSLATE:
-	  if (iter->GetCode () == Packet::INTEGER && !iter->GetInteger ())
-	    write.AppendWord ("INCLUDE-TEXT");
-	  else
-	    {
-	      write.AppendWord ("INCLUDE-IMPORT");
-	      if (iter->GetCode () == Packet::STRING)
-		write.AppendWord (iter->GetString (), true);
-	    }
-	  break;
+  return r->ModuleRepoRequest (s);
+}
 
-	case RC_HWM:
-	  write.AppendWord ("ERROR");
-	  write.AppendWord (iter->GetString (), true);
-	  break;
-	}
-      write.EndLine ();
-    }
+int ModuleExportRequest (Server *s, Resolver *r, std::vector<std::string> &words)
+{
+  if (words.size () != 2 || words[1].empty ())
+    return -1;
 
-  write.PrepareToWrite ();
+  return r->ModuleExportRequest (s, words[1]);
+}
+
+int ModuleImportRequest (Server *s, Resolver *r, std::vector<std::string> &words)
+{
+  if (words.size () != 2 || words[1].empty ())
+    return -1;
+
+  return r->ModuleExportRequest (s, words[1]);
+}
+
+int ModuleCompiledRequest (Server *s, Resolver *r,
+			   std::vector<std::string> &words)
+{
+  if (words.size () != 2 || words[1].empty ())
+    return -1;
+
+  return r->ModuleCompiledRequest (s, words[1]);
+}
+
+int IncludeTranslateRequest (Server *s, Resolver *r,
+			     std::vector<std::string> &words)
+{
+  if (words.size () != 2 || words[1].empty ())
+    return -1;
+
+  return r->IncludeTranslateRequest (s, words[1]);
+}
+
+void Server::ErrorResponse (char const *error, size_t elen)
+{
+  write.BeginLine ();
+  write.AppendWord ("ERROR");
+  write.AppendWord (error, true, elen);
+  write.EndLine ();
+}
+
+void Server::OKResponse ()
+{
+  write.BeginLine ();
+  write.AppendWord ("OK");
+  write.EndLine ();
+}
+
+void Server::ConnectResponse (char const *agent, size_t alen)
+{
+  write.BeginLine ();
+  write.AppendWord ("HELLO");
+  write.AppendInteger (Version);
+  write.AppendWord (agent, true, alen);
+  write.EndLine ();
+}
+
+void Server::ModuleRepoResponse (char const *repo, size_t rlen)
+{
+  write.BeginLine ();
+  write.AppendWord ("MODULE-REPO");
+  write.AppendWord (repo, true, rlen);
+  write.EndLine ();
+}
+
+void Server::ModuleCMIResponse (char const *cmi, size_t clen)
+{
+  write.BeginLine ();
+  write.AppendWord ("MODULE-CMI");
+  write.AppendWord (cmi, true, clen);
+  write.EndLine ();
+}
+
+void Server::IncludeTranslateResponse (bool translate)
+{
+  write.BeginLine ();
+  write.AppendWord (translate ? "INCLUDE-IMPORT" : "INCLUDE-TEXT");
+  write.EndLine ();
 }
 
 }
