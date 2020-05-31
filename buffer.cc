@@ -22,6 +22,8 @@
 
 namespace Cody {
 
+static const char CONTINUE = ';';
+
 void MessageBuffer::BeginLine ()
 {
   if (!buffer.empty ())
@@ -29,7 +31,7 @@ void MessageBuffer::BeginLine ()
       // Terminate the previous line with a continuation
       buffer.reserve (buffer.size () + 3);
       buffer.push_back (' ');
-      buffer.push_back ('\\');
+      buffer.push_back (CONTINUE);
       buffer.push_back ('\n');
     }
   lastBol = buffer.size ();
@@ -101,6 +103,12 @@ void MessageBuffer::Append (char const *str, bool quote, size_t len)
 
 	case '\n':
 	  c = 'n';
+	  goto append;
+
+	case ' ':
+	  // Escape SPACE so that encoded words do not contain naked
+	  // spaces.  Use a bespoke escape, for visual effect.
+	  c = '_';
 	  goto append;
 
 	case '\'':
@@ -187,7 +195,7 @@ int MessageBuffer::Read (int fd)
       auto newline = std::find (iter, buffer.end (), '\n');
       if (newline == buffer.end ())
 	break;
-      more = newline != buffer.begin () && newline[-1] == '\\';
+      more = newline != buffer.begin () && newline[-1] == CONTINUE;
       iter = newline + 1;
 	
       if (iter == buffer.end ())
@@ -231,15 +239,16 @@ int MessageBuffer::Lex (std::vector<std::string> &result)
       if (c == '\n')
 	break;
 
-      if (c == '\\')
+      if (c == CONTINUE)
 	{
+	  // Line continuation
 	  if (word || *iter != '\n')
 	    goto malformed;
 	  ++iter;
 	  break;
 	}
 
-      if (c < ' ' || c >= 0x7f)
+      if (c <= ' ' || c >= 0x7f)
 	goto malformed;
 
       if (!word)
@@ -261,7 +270,8 @@ int MessageBuffer::Lex (std::vector<std::string> &result)
 		  result.clear ();
 		  iter = std::find (iter, buffer.end (), '\n');
 		  auto back = iter;
-		  if (back[-1] == '\\'  && back[-2] == ' ')
+		  if (back[-1] == CONTINUE  && back[-2] == ' ')
+		    // Smells like a line continuation
 		    back -= 2;
 		  result.emplace_back (&buffer[lastBol],
 				       back - buffer.begin () - lastBol);
@@ -288,6 +298,11 @@ int MessageBuffer::Lex (std::vector<std::string> &result)
 
 		    case 'n':
 		      c = '\n';
+		      ++iter;
+		      break;
+
+		    case '_':
+		      c = ' ';
 		      ++iter;
 		      break;
 
@@ -354,7 +369,8 @@ void MessageBuffer::LexedLine (std::string &str)
 	  break;
 
       size_t end = lastBol - 1;
-      if (buffer[end-1] == '\\' && buffer[end-2] == ' ')
+      if (buffer[end-1] == CONTINUE && buffer[end-2] == ' ')
+	// Strip line continuation
 	end -= 2;
       str.append (&buffer[pos], end - pos);
     }

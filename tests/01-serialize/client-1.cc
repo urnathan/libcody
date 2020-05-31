@@ -1,26 +1,26 @@
 
 // Test client message round tripping
 /*
-  RUN: <<HELLO 0 TESTING \
-  RUN: <<MODULE-REPO REPO \
-  RUN: <<MODULE-CMI biz/bar \
-  RUN: <<MODULE-CMI blob \
-  RUN: <<INCLUDE-TEXT \
-  RUN: << INCLUDE-IMPORT \
-  RUN: << MODULE-CMI foo \
+  RUN: <<HELLO 0 TESTING ;
+  RUN: <<MODULE-REPO REPO ;
+  RUN: <<MODULE-CMI biz/bar ;
+  RUN: <<MODULE-CMI blob ;
+  RUN: <<INCLUDE-TEXT ;
+  RUN: << INCLUDE-IMPORT ;
+  RUN: << MODULE-CMI foo ;
   RUN: <<OK
 */
 // RUN: $subdir$stem | ezio -p OUT $src |& ezio -p ERR $src
 // RUN-END:
 
 /*
-  OUT-NEXT:^HELLO {:[0-9]+} TEST IDENT \$
-  OUT-NEXT:^MODULE-REPO \
-  OUT-NEXT:^MODULE-EXPORT bar \
-  OUT-NEXT:^MODULE-IMPORT foo \
-  OUT-NEXT:^INCLUDE-TRANSLATE baz.frob \
-  OUT-NEXT:^INCLUDE-TRANSLATE ./corge \
-  OUT-NEXT:^INCLUDE-TRANSLATE ./quux \
+  OUT-NEXT:^HELLO {:[0-9]+} TEST IDENT ;$
+  OUT-NEXT:^MODULE-REPO ;
+  OUT-NEXT:^MODULE-EXPORT bar ;
+  OUT-NEXT:^MODULE-IMPORT foo ;
+  OUT-NEXT:^INCLUDE-TRANSLATE baz.frob ;
+  OUT-NEXT:^INCLUDE-TRANSLATE ./corge ;
+  OUT-NEXT:^INCLUDE-TRANSLATE ./quux ;
   OUT-NEXT:^MODULE-COMPILED bar
 */
 // OUT-NEXT:$EOF

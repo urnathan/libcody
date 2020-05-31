@@ -2,15 +2,16 @@
 // Copyright (C) 2020 Nathan Sidwell, nathan@acm.org
 // License: LGPL v3.0 or later
 
-// RUN: <<bob 'frob dob''\nF\61\\'
+// RUN: <<bob 'frob dob''\nF\_b\20\61\\'
 // RUN: $subdir$stem |& ezio $src
 // CHECK-NEXT: ^line:0 word:0 'bob'
 // CHECK-NEXT: ^line:0 word:1 'frob dob$
-// CHECK-NEXT: ^Fa\'$
+// CHECK-OPTION: matchSpace
+// CHECK-NEXT: ^F b a\'$
 // CHECK-NEXT: $EOF
 
-/* RUN: <<line-1 word:1 \
-   RUN: <<'line 2' \
+/* RUN: <<line-1 word:1 ;
+   RUN: <<'line 2' ;
    RUN: <<
 */
 // RUN: $subdir$stem |& ezio -p CHECK2 $src
@@ -26,7 +27,7 @@
 // CHECK3-NEXT: line:0 word:0 '''
 // CHECK3-NEXT: $EOF
 
-/* RUN: << \
+/* RUN: << ;
    RUN: <<'\g'
 */
 // RUN: $subdir$stem |& ezio -p CHECK4 $src
