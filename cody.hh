@@ -478,6 +478,7 @@ public:
   void PrepareToWrite ()
   {
     write.PrepareToWrite ();
+    direction = WRITING;
   }
   int Read ()
   {
@@ -486,6 +487,7 @@ public:
   void PrepareToRead ()
   {
     write.PrepareToRead ();
+    direction = READING;
   }
 };
 

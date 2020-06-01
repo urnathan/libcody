@@ -46,9 +46,9 @@ Server::~Server ()
 
 void Server::DirectProcess (MessageBuffer &from, MessageBuffer &to)
 {
+  read.PrepareToRead ();
   std::swap (read, from);
-  if (ParseRequests (direct))
-    {} // FIXME: Something wrong
+  ParseRequests (direct);
   write.PrepareToWrite ();
   std::swap (to, write);
 }
@@ -58,6 +58,7 @@ bool Server::ParseRequests (Resolver *resolver)
   std::vector<std::string> words;
   bool deferred = false;
 
+  direction = PROCESSING;
   while (!read.IsAtEnd ())
     {
       bool found = false;
