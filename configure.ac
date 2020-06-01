@@ -23,12 +23,13 @@ CODY_ENABLE_CHECKING
 
 AC_CONFIG_HEADER(config.h)
 AC_CHECK_TOOL([AR],[ar])
-AC_CHECK_TOOL([DOXYGEN],[doxygen],[:])
+AC_CHECK_TOOL([DOXYGEN],[doxygen],[: NOTdoxygen])
+AC_CHECK_TOOL([ALOY],[aloy],[: NOTaloy])
 AH_VERBATIM([_GNU_SOURCE],[#define _GNU_SOURCE 1])
 AH_VERBATIM([_FORTIFY_SOURCE],[#undef _FORTIFY_SOURCE])
 
 CONFIG_FILES="Makefile gdbinit dox.cfg"
-CODY_OPTIONAL_SUBPROJ([joust])
+CODY_OPTIONAL_SUBPROJ([joust],[ALOY=aloy])
 
 AC_SUBST(configure_args,[$ac_configure_args])
 AC_SUBST(SUBPROJS)

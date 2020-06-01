@@ -8,10 +8,14 @@ TESTS := $(patsubst $(srcdir)/%.cc,%,\
 TESTDIRS = $(shell cd $(srcdir)/${<D} ; echo *(/))
 ifneq (,$(filter joust,$(SUBPROJS)))
 check: PATH := ../joust:$(PATH)
+else
+ifneq (./,$(dir $(firstword $(ALOY))))
+check: PATH := $(dir $(firstword $(ALOY)))):$(PATH)
+endif
 endif
 
 check:: tests/cody.defs $(TESTS)
-	+cd ${<D} && JOUST=${<F} aloy -t kratos -o cody \
+	+cd ${<D} && JOUST=${<F} $(ALOY) -t kratos -o cody \
 	  -g ../$(srcdir)/tests/jouster $(TESTDIRS)
 
 tests/cody.defs: tests/Makesub

@@ -20,6 +20,7 @@ fi])
 AC_DEFUN([CODY_REQUIRED_SUBPROJ],
 [CODY_SUBPROJ([$1],,[AC_MSG_ERROR([$1 project is required, install by value (copy) or reference (symlink)])])])
 
+# CODY_SUBPROJ(NAME,[FOUND=],[NOT-FOUND=])
 AC_DEFUN([CODY_OPTIONAL_SUBPROJ],
 [AC_MSG_CHECKING([subproject $1])
 if test -d ${srcdir}/$1; then
@@ -29,8 +30,10 @@ if test -d ${srcdir}/$1; then
   else
     AC_MSG_RESULT([by value])
   fi
+  $2
 else
   AC_MSG_RESULT([not present])
+  $3
 fi])
 
 AC_DEFUN([CODY_TOOLS],
