@@ -4,10 +4,12 @@
 
 #include "cody.hh"
 
-#define CODY_LOC_BUILTINS (__GNUC__ >= 10)
-// C++
-#if !CODY_LOC_BUILTINS
+#if __GNUC__ >= 10
+#define CODY_LOC_BUILTINS 1
+#elif __has_include (<source_location>)
 #include <source_location>
+#else
+#define CODY_LOC_MACRO 1
 #endif
 // C
 #include <cstdio>
@@ -35,7 +37,7 @@ public:
   {
   }
 
-#if !CODY_LOC_BUILTINS
+#if !CODY_LOC_BUILTINS && !CODY_LOC_MACRO
   constexpr Location (source_location loc == source_location::current ())
     :file (loc.file ()), line (loc.line ())
   {
@@ -58,13 +60,25 @@ void HCF [[noreturn]]
 (
  char const *msg
 #if CODY_CHECKING
+#if !CODY_LOC_MACRO
  , Location const = Location ()
+#else
+ , char const *, unsigned
+#define HCF(M) HCF ((M), __FILE__, __LINE__)
+#endif
 #endif
  ) noexcept;
 
 #if CODY_CHECKING
+#if !CODY_LOC_MACRO
 void AssertFailed [[noreturn]] (Location loc = Location ());
 void Unreachable [[noreturn]] (Location loc = Location ());
+#else
+void AssertFailed [[noreturn]] (char const *, unsigned);
+void Unreachable [[noreturn]] (char const *, unsigned);
+#define AssertFailed() AssertFailed (__FILE__, __LINE__)
+#define Unreachable() Unreachable (__FILE__, __LINE__)
+#endif
 
 // Oh for lazily evaluated function parameters
 #define Assert(EXPR, ...)						\

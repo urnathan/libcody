@@ -14,6 +14,7 @@
 namespace Cody {
 
 #if CODY_CHECKING
+#if !CODY_LOC_MACRO
 void AssertFailed (Location loc)
 {
   HCF ("assertion failed", loc);
@@ -22,19 +23,36 @@ void Unreachable (Location loc)
 {
   HCF ("unreachable reached", loc);
 }
+#else
+void (AssertFailed) (char const *file_, unsigned line_)
+{
+  (HCF) ("assertion failed", file_, line_);
+}
+void (Unreachable) (char const *file_, unsigned line_)
+{
+  (HCF) ("unreachable reached", file_, line_);
+}
+#endif
 #endif
 
-void HCF (char const *msg
+void (HCF) (char const *msg
 #if CODY_CHECKING
-	    , Location const loc
+#if !CODY_LOC_MACRO
+	  , Location const loc
+#else
+	  , char const *file_, unsigned line_
 #endif
-	    ) noexcept
+#endif
+	  ) noexcept
 { // HCF - you goofed!
   __asm__ volatile ("nop");  // HCF - you goofed!
 
 #if !CODY_CHECKING
   Location loc (nullptr, 0);
+#elif CODY_LOC_MACRO
+  Location loc (file_, line_);
 #endif
+
   fprintf (stderr, "CODYlib: %s", msg ? msg : "internal error");
   if (char const *file = loc.File ())
     {
