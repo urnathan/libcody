@@ -6,7 +6,7 @@ CXXFLAGS/ := -I $(srcdir)
 
 all:: libcody.a
 
-LIBCODY.O := $(addprefix ,buffer.o client.o fatal.o resolver.o server.o)
+LIBCODY.O := buffer.o client.o fatal.o resolver.o server.o
 libcody.a: $(LIBCODY.O)
 	$(AR) -cr $@ $^
 
@@ -18,8 +18,12 @@ CXXFLAGS/fatal.cc = -DREVISION='"$(shell cat revision)"' -DSRCDIR='"$(srcdir)"'
 
 fatal.o: Makefile revision
 
-doc.cody: dox.cfg
-	cd $(<D); doxygen $(<F) >&dox.log
+doc:: dox.cfg
+ifneq ($(DOXYGEN),:)
+	cd $(<D); $(DOXYGEN) $(<F) >&dox.log
+else
+	@echo "doxygen not present, documentation not built"
+endif
 
 clean::
 	rm -rf dox dox.log

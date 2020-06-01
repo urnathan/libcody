@@ -35,6 +35,7 @@ SHELL := zsh
 
 CXX := @CXX@
 AR := @AR@
+DOXYGEN := @DOXYGEN@
 
 # C++ compiler options
 CXXFLAGS := @CXXFLAGS@
