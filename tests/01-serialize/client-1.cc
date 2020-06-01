@@ -1,7 +1,7 @@
 
 // Test client message round tripping
 /*
-  RUN: <<HELLO 0 TESTING ;
+  RUN: <<HELLO 1 TESTING ;
   RUN: <<MODULE-REPO REPO ;
   RUN: <<MODULE-CMI biz/bar ;
   RUN: <<MODULE-CMI blob ;
@@ -26,8 +26,7 @@
 // OUT-NEXT:$EOF
 
 // ERR-NEXT:Code:1$
-// ERR-NEXT:Vector[0]:0$
-// ERR-NEXT:Vector[1]:TESTING$
+// ERR-NEXT:Integer:1$
 // ERR-NEXT:Code:3$
 // ERR-NEXT:String:REPO$
 // ERR-NEXT:Code:4$

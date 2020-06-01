@@ -102,6 +102,8 @@ Packet Client::ProcessResponse (std::vector<std::string> &words,
       msg.push_back ('\'');
       result.GetString () = std::move (msg);
     }
+  else if (result.GetCode () == Client::PC_CONNECT)
+    is_connected = true;
 
   return result;
 }
@@ -174,10 +176,12 @@ Packet ConnectResponse (std::vector<std::string> &words)
 {
   if (words[0] == "HELLO" && words.size () == 3)
     {
-      // I suppose at some point I may need to pay attention to the
-      // version information
-      words.erase (words.begin ());
-      return Packet (Client::PC_CONNECT, std::move (words));
+      char *eptr;
+      unsigned long version = strtoul (words[1].c_str (), &eptr, 10);
+      if (*eptr || version < Version)
+	return Packet (Client::PC_ERROR, "incompatible version");
+      else
+	return Packet (Client::PC_CONNECT, version);
     }
 
   return Packet (Client::PC_ERROR, "");

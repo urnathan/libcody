@@ -1,7 +1,7 @@
 
 // Test server message round tripping
 /*
-  RUN:<<HELLO 0 TEST IDENT ;
+  RUN:<<HELLO 1 TEST IDENT ;
   RUN:<<MODULE-REPO ;
   RUN:<<MODULE-EXPORT bar ;
   RUN:<<MODULE-IMPORT foo ;
@@ -15,7 +15,7 @@
 
 // These all fail because there's nothing in the server interpretting stuff
 /*
-  OUT1-NEXT: ^HELLO 0 default	;
+  OUT1-NEXT: ^HELLO 1 default	;
   OUT1-NEXT: ^MODULE-REPO gcm.cache	;
   OUT1-NEXT: ^MODULE-CMI bar.gcm	;
   OUT1-NEXT: ^MODULE-CMI foo.gcm	;
@@ -29,12 +29,12 @@
 // ERR1-NEXT:$EOF
 
 /*
-  RUN:<<HELLO 0 TEST IDENT
+  RUN:<<HELLO 1 TEST IDENT
   RUN:<<MODULE-REPO
 */
 // RUN: $subdir$stem | ezio -p OUT2 $src |& ezio -p ERR2 $src
 /*
-  OUT2-NEXT: ^HELLO 0 default
+  OUT2-NEXT: ^HELLO 1 default
 */
 // OUT2-NEXT:$EOF
 // ERR2-NEXT:$EOF

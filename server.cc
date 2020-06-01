@@ -63,17 +63,22 @@ bool Server::ParseRequests (Resolver *resolver)
   direction = PROCESSING;
   while (!read.IsAtEnd ())
     {
-      bool found = false;
+      bool err = 0;
       if (!read.Lex (words))
 	{
 	  Assert (!words.empty ());
 	  for (unsigned ix = RC_HWM; ix--;)
 	    if (words[0] == std::get<0> (requestTable[ix]))
 	      {
+		if (IsConnected () == (ix == RC_CONNECT))
+		  {
+		    err = -1;
+		    break;
+		  }
 		int res = std::get<1> (requestTable[ix]) (this, resolver, words);
 		if (res < 0)
 		  {
-		    found = true;
+		    err = +1;
 		    break;
 		  }
 
@@ -84,7 +89,10 @@ bool Server::ParseRequests (Resolver *resolver)
 	}
 
       {
-	std::string msg {found ? "malformed" : "unrecognized"};
+	std::string msg {err > 0 ? "malformed"
+			 : !err ? "unrecognized"
+			 : IsConnected () ? "connected"
+			 : "unconnected"};
 
 	msg.append (" request '");
 	read.LexedLine (msg);
@@ -170,6 +178,8 @@ void Server::OKResponse ()
 
 void Server::ConnectResponse (char const *agent, size_t alen)
 {
+  is_connected = true;
+
   write.BeginLine ();
   write.AppendWord ("HELLO");
   write.AppendInteger (Version);

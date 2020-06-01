@@ -19,7 +19,10 @@
 
 namespace Cody {
 
-constexpr unsigned Version = 0;
+// Set version to 1, as this is completely incompatible with 0.
+// Fortunately both versions 0 and 1 will recognize each other's HELLO
+// messages sufficiently to error out
+constexpr unsigned Version = 1;
 
 class Packet
 {
