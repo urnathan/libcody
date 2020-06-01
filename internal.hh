@@ -14,6 +14,7 @@
 
 namespace Cody {
 
+#if CODY_CHECKING
 class Location
 {
 protected:
@@ -51,6 +52,7 @@ public:
     return line;
   }
 };
+#endif
 
 void HCF [[noreturn]]
 (
@@ -64,6 +66,7 @@ void HCF [[noreturn]]
 void AssertFailed [[noreturn]] (Location loc = Location ());
 void Unreachable [[noreturn]] (Location loc = Location ());
 
+// Oh for lazily evaluated function parameters
 #define Assert(EXPR, ...)						\
   (__builtin_expect (bool (EXPR __VA_OPT__ (, __VA_ARGS__)), true)	\
    ? (void)0 : AssertFailed ())
@@ -76,12 +79,7 @@ inline void Unreachable ()
 }
 #endif
 
-#if CODY_CHECKING
-#define CODY_CHOOSE(X,Y) (X)
-#else
-#define CODY_CHOOSE(X,Y) (Y)
-#endif
-
+// FIXME: This should be user visible in some way
 void BuildNote (FILE *stream) noexcept;
 
 }

@@ -4,6 +4,13 @@
 
 // Cody
 #include "internal.hh"
+// OS
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+// Resolver code
 
 #if __windows__
 inline bool IsDirSep (char c)
@@ -29,8 +36,9 @@ inline bool IsAbsPath (char const *str)
 }
 #endif
 
-#define DOT_REPLACE ','
-#define COLON_REPLACE '_'
+constexpr char DOT_REPLACE = ',';
+constexpr char COLON_REPLACE = '_';
+constexpr char const REPO_DIR[] = "gcm.cache";
 
 namespace Cody {
 
@@ -50,7 +58,7 @@ bool Resolver::ConnectRequest (Server *s, unsigned version,
 
 bool Resolver::ModuleRepoRequest (Server *s)
 {
-  s->ModuleRepoResponse ("gcm.cache");
+  s->ModuleRepoResponse (REPO_DIR);
   return false;
 }
 
@@ -131,9 +139,30 @@ bool Resolver::ModuleCompiledRequest (Server *s, std::string &)
   return false;
 }
 
-bool Resolver::IncludeTranslateRequest (Server *s, std::string &)
+bool Resolver::IncludeTranslateRequest (Server *s, std::string &include)
 {
-  s->IncludeTranslateResponse (0);
+  bool xlate = false;
+
+  // This is not the most efficient
+  int fd_dir = open (REPO_DIR, O_RDONLY | O_CLOEXEC | O_DIRECTORY);
+  if (fd_dir >= 0)
+    {
+      auto cmi = DefaultCMIMapping (include);
+      struct stat statbuf;
+      if (fstatat (fd_dir, cmi.c_str (), &statbuf, 0) == 0
+	  && S_ISREG (statbuf.st_mode))
+	{
+	  // Sadly can't easily check if this proces has read access,
+	  // except by trying to open it.
+	  s->ModuleCMIResponse (cmi);
+	  xlate = true;
+	}
+      close (fd_dir);
+    }
+
+  if (!xlate)
+    s->IncludeTranslateResponse (0);
+
   return false;
 }
 

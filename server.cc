@@ -5,6 +5,8 @@
 // Cody
 #include "internal.hh"
 
+// Server code
+
 namespace Cody {
 
 // These do not need to be members

@@ -12,6 +12,8 @@
 #include <unistd.h>
 #include <cerrno>
 
+// MessageBuffer code
+
 // Lines end with \n newline char
 // Continuations with \ preceding it
 // Quoting with '...'
