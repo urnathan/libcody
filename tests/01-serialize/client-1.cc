@@ -54,9 +54,7 @@ using namespace Cody;
 
 int main (int, char *[])
 {
-  Client client;
-
-  client.OpenFDs (0, 1);
+  Client client (0, 1);
 
   client.Cork ();
   if (client.Connect ("TEST", "IDENT").GetCode () != Client::PC_CORKED)

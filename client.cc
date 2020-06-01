@@ -6,6 +6,11 @@
 #include "internal.hh"
 // C
 #include <cstring>
+// OS
+#include <unistd.h>
+#include <netdb.h>
+#include <sys/un.h>
+#include <arpa/inet.h>
 
 namespace Cody {
 
@@ -34,32 +39,13 @@ Client::Client ()
 
 Client::~Client ()
 {
-  // FIXME: Close?
-}
-
-int Client::OpenDirect (Server *s)
-{
-  Assert (!IsOpen ());
-  direct = true;
-  server = s;
-
-  return 0;
-}
-
-int Client::OpenFDs (int from, int to)
-{
-  Assert (!IsOpen ());
-  fd_from = from;
-  fd_to = to < 0 ? from : to;
-
-  return 0;
 }
 
 int Client::CommunicateWithServer ()
 {
   write.PrepareToWrite ();
   read.PrepareToRead ();
-  if (direct)
+  if (IsDirect ())
     server->DirectProcess (write, read);
   else
     {
@@ -294,7 +280,6 @@ Packet IncludeTranslateResponse (std::vector<std::string> &words)
   else
     return ModuleCMIResponse (words);
 }
-
 
 }
 

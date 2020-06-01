@@ -22,9 +22,8 @@ using namespace Cody;
 
 int main (int, char *[])
 {
-  Client client;
+  Client client (0, 1);
 
-  client.OpenFDs (0, 1);
   auto token = client.Connect ("TEST", "IDENT");
 
   std::cerr << "Code:" << token.GetCode () << '\n';

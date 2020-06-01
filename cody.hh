@@ -13,11 +13,9 @@
 // C
 #include <cstddef>
 // OS
+// FIXME: probably want some goop in cody-conf.h
 #include <sys/types.h>
 #include <sys/socket.h>
-
-
-// FIXME: Should I PIMPL this?
 
 namespace Cody {
 
@@ -267,31 +265,46 @@ private:
     };
     Server *server;
   };
-  bool direct = false;
+  bool is_direct = false;
+  bool is_connected = false;
 
-public:
+private:
   Client ();
+public:
+  Client (Server *s)
+    : Client ()
+  {
+    is_direct = true;
+    server = s;
+  }
+  Client (int from, int to = -1)
+    : Client ()
+  {
+    fd_from = from;
+    fd_to = to < 0 ? from : to;
+  }
   ~Client ();
   Client (Client &&) = default;
   Client &operator= (Client &&) = default;
 
 public:
-  int OpenDirect (Server *);
-  int OpenFDs (int from, int to = -1);
-  int OpenLocal (std::string &e, char const *name, size_t len = ~size_t (0));
-  int OpenLocal (std::string &e, std::string const &s)
+  bool IsDirect () const
   {
-    return OpenLocal (e, s.c_str (), s.size ());
+    return is_direct;
   }
-  int OpenSocket (std::string &e, char const *name,
-		  int port, size_t len = ~size_t (0));
-  int OpenLocal (std::string &e, std::string const &s, int port)
+  bool IsConnected () const
   {
-    return OpenSocket (e, s.c_str (), port, s.size ());
+    return is_connected;
   }
-  bool IsOpen () const
+
+public:
+  int GetFDRead () const
   {
-    return direct || fd_from >= 0;
+    return is_direct ? -1 : fd_from;
+  }
+  int GetFDWrite () const
+  {
+    return is_direct || fd_from == fd_to ? -1 : fd_to;
   }
 
 public:
@@ -363,6 +376,9 @@ public:
 
 class Server
 {
+public:
+  enum Direction {READING, WRITING, PROCESSING};
+
 private:
   MessageBuffer write;
   MessageBuffer read;
@@ -375,10 +391,13 @@ private:
     };
     Resolver *direct;
   };
-  bool writing = false;
+  bool is_connected = false;
+  bool is_direct = false;
+  Direction direction : 2;
 
 private:
   Server ();
+
 public:
   Server (int from, int to = -1)
     : Server ()
@@ -386,15 +405,39 @@ public:
     fd_from = from;
     fd_to = to >= 0 ? to : from;
   }
-  
   Server (Resolver *r)
     : Server ()
   {
     direct = r;
+    is_direct = true;
   }
   ~Server ();
   Server (Server &&) = default;
   Server &operator= (Server &&) = default;
+
+public:
+  bool IsConnected () const
+  {
+    return is_connected;
+  }
+  bool IsDirect () const
+  {
+    return is_direct;
+  }
+
+public:
+  Direction GetDirection () const
+  {
+    return direction;
+  }
+  int GetFDRead () const
+  {
+    return is_direct ? -1 : fd_from;
+  }
+  int GetFDWrite () const
+  {
+    return is_direct || fd_from == fd_to ? -1 : fd_to;
+  }
 
 public:
   void DirectProcess (MessageBuffer &from, MessageBuffer &to);
@@ -446,16 +489,21 @@ public:
   }
 };
 
-class Listener
-{
-private:
-  std::vector<Server *> servers;
-  int fd = -1;
+// Helper network stuff
 
-public:
-  Listener ();
-  ~Listener ();
-};
+// Socket with specific address
+int OpenSocket (char const **, sockaddr const *sock, socklen_t len);
+int ListenSocket (char const **, sockaddr const *sock, socklen_t len,
+		  unsigned backlog);
+
+// Local domain socket (eg AF_UNIX)
+int OpenLocal (char const **, char const *name);
+int ListenLocal (char const **, char const *name, unsigned backlog = 0);
+
+// ipv6 socket
+int OpenInet6 (char const **e, char const *name, int port);
+int ListenInet6 (char const **, char const *name, int port,
+		 unsigned backlog = 0);
 
 }
 
