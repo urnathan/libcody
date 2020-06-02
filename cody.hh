@@ -366,17 +366,24 @@ private:
 class Resolver 
 {
 public:
+  Resolver () = default;
   virtual ~Resolver ();
+
+protected:
+  // Default conversion of a module name to a cmi file.
+  virtual std::string GetCMIName (std::string const &module);
+  virtual char const *GetCMISuffix ();
 
 public:
   virtual void ErrorResponse (Server *, std::string &&msg);
-  virtual bool ConnectRequest (Server *, unsigned version,
-			       std::string &agent, std::string &ident);
-  virtual bool ModuleRepoRequest (Server *);
-  virtual bool ModuleExportRequest (Server *, std::string &module);
-  virtual bool ModuleImportRequest (Server *, std::string &module);
-  virtual bool ModuleCompiledRequest (Server *, std::string &module);
-  virtual bool IncludeTranslateRequest (Server *, std::string &include);
+  virtual Resolver *ConnectRequest (Server *, unsigned version,
+				    std::string &agent, std::string &ident);
+  // return 0 on ok, ERRNO on failure, -1 on unspecific error
+  virtual int ModuleRepoRequest (Server *);
+  virtual int ModuleExportRequest (Server *, std::string &module);
+  virtual int ModuleImportRequest (Server *, std::string &module);
+  virtual int ModuleCompiledRequest (Server *, std::string &module);
+  virtual int IncludeTranslateRequest (Server *, std::string &include);
 };
 
 class Server
@@ -440,10 +447,14 @@ public:
   {
     return is_direct || fd.from == fd.to ? -1 : fd.to;
   }
+  Resolver *GetResolver () const
+  {
+    return is_direct ? resolver_ : nullptr;
+  }
 
 public:
   void DirectProcess (MessageBuffer &from, MessageBuffer &to);
-  bool ParseRequests (Resolver *);
+  Resolver *ParseRequests (Resolver *);
 
 public:
   void ErrorResponse (char const *error, size_t elen = ~size_t (0));

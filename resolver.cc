@@ -46,23 +46,12 @@ Resolver::~Resolver ()
 {
 }
 
-bool Resolver::ConnectRequest (Server *s, unsigned version,
-			       std::string &, std::string &)
+char const *Resolver::GetCMISuffix ()
 {
-  if (version > Version)
-    s->ErrorResponse ("version mismatch");
-  else
-    s->ConnectResponse ("default");
-  return false;
+  return "cmi";
 }
 
-bool Resolver::ModuleRepoRequest (Server *s)
-{
-  s->ModuleRepoResponse (REPO_DIR);
-  return false;
-}
-
-static std::string DefaultCMIMapping (std::string &module)
+std::string Resolver::GetCMIName (std::string const &module)
 {
   std::string result;
 
@@ -114,32 +103,53 @@ static std::string DefaultCMIMapping (std::string &module)
 	result[colon] = COLON_REPLACE;
     }
 
-  result.append (".gcm");
+  if (char const *suffix = GetCMISuffix ())
+    {
+      result.push_back ('.');
+      result.append (suffix);
+    }
 
   return result;
 }
 
-bool Resolver::ModuleExportRequest (Server *s, std::string &module)
+Resolver *Resolver::ConnectRequest (Server *s, unsigned version,
+			       std::string &, std::string &)
 {
-  auto cmi = DefaultCMIMapping (module);
-  s->ModuleCMIResponse (cmi);
-  return false;
+  if (version > Version)
+    s->ErrorResponse ("version mismatch");
+  else
+    s->ConnectResponse ("default");
+
+  return this;
 }
 
-bool Resolver::ModuleImportRequest (Server *s, std::string &module)
+int Resolver::ModuleRepoRequest (Server *s)
 {
-  auto cmi = DefaultCMIMapping (module);
-  s->ModuleCMIResponse (cmi);
-  return false;
+  s->ModuleRepoResponse (REPO_DIR);
+  return 0;
 }
 
-bool Resolver::ModuleCompiledRequest (Server *s, std::string &)
+int Resolver::ModuleExportRequest (Server *s, std::string &module)
+{
+  auto cmi = GetCMIName (module);
+  s->ModuleCMIResponse (cmi);
+  return 0;
+}
+
+int Resolver::ModuleImportRequest (Server *s, std::string &module)
+{
+  auto cmi = GetCMIName (module);
+  s->ModuleCMIResponse (cmi);
+  return 0;
+}
+
+int Resolver::ModuleCompiledRequest (Server *s, std::string &)
 {
   s->OKResponse ();
-  return false;
+  return 0;
 }
 
-bool Resolver::IncludeTranslateRequest (Server *s, std::string &include)
+int Resolver::IncludeTranslateRequest (Server *s, std::string &include)
 {
   bool xlate = false;
 
@@ -147,7 +157,7 @@ bool Resolver::IncludeTranslateRequest (Server *s, std::string &include)
   int fd_dir = open (REPO_DIR, O_RDONLY | O_CLOEXEC | O_DIRECTORY);
   if (fd_dir >= 0)
     {
-      auto cmi = DefaultCMIMapping (include);
+      auto cmi = GetCMIName (include);
       struct stat statbuf;
       if (fstatat (fd_dir, cmi.c_str (), &statbuf, 0) == 0
 	  && S_ISREG (statbuf.st_mode))
@@ -163,7 +173,7 @@ bool Resolver::IncludeTranslateRequest (Server *s, std::string &include)
   if (!xlate)
     s->IncludeTranslateResponse (0);
 
-  return false;
+  return 0;
 }
 
 void Resolver::ErrorResponse (Server *server, std::string &&msg)

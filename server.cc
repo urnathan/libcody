@@ -4,14 +4,18 @@
 
 // Cody
 #include "internal.hh"
+// C++
+#include <tuple>
+// C
+#include <cstring>
 
 // Server code
 
 namespace Cody {
 
 // These do not need to be members
-static int ConnectRequest (Server *, Resolver *,
-			   std::vector<std::string> &words);
+static Resolver *ConnectRequest (Server *, Resolver *,
+				 std::vector<std::string> &words);
 static int ModuleRepoRequest (Server *, Resolver *,
 			      std::vector<std::string> &words);
 static int ModuleExportRequest (Server *, Resolver *,
@@ -21,7 +25,7 @@ static int ModuleImportRequest (Server *, Resolver *,
 static int ModuleCompiledRequest (Server *, Resolver *,
 				  std::vector<std::string> &words);
 static int IncludeTranslateRequest (Server *, Resolver *,
-				    std::vector<std::string> &words);
+				     std::vector<std::string> &words);
 
 
 static std::tuple<char const *,
@@ -29,7 +33,7 @@ static std::tuple<char const *,
   const requestTable[RC_HWM] =
   {
     // Same order as enum RequestCode
-    {"HELLO", ConnectRequest},
+    {"HELLO", nullptr},
     {"MODULE-REPO", ModuleRepoRequest},
     {"MODULE-EXPORT", ModuleExportRequest},
     {"MODULE-IMPORT", ModuleImportRequest},
@@ -83,71 +87,92 @@ void Server::DirectProcess (MessageBuffer &from, MessageBuffer &to)
 {
   read.PrepareToRead ();
   std::swap (read, from);
-  ParseRequests (resolver_);
+  resolver_ = ParseRequests (resolver_);
   write.PrepareToWrite ();
   std::swap (to, write);
 }
 
-bool Server::ParseRequests (Resolver *resolver)
+Resolver *Server::ParseRequests (Resolver *resolver)
 {
   std::vector<std::string> words;
-  bool deferred = false;
 
   direction = PROCESSING;
   while (!read.IsAtEnd ())
     {
       bool err = 0;
+      unsigned ix = RC_HWM;
       if (!read.Lex (words))
 	{
 	  Assert (!words.empty ());
-	  for (unsigned ix = RC_HWM; ix--;)
-	    if (words[0] == std::get<0> (requestTable[ix]))
-	      {
-		if (IsConnected () == (ix == RC_CONNECT))
-		  {
-		    err = -1;
-		    break;
-		  }
-		int res = std::get<1> (requestTable[ix]) (this, resolver, words);
-		if (res < 0)
-		  {
-		    err = +1;
-		    break;
-		  }
+	  while (ix--)
+	    {
+	      if (words[0] != std::get<0> (requestTable[ix]))
+		continue; // not this one
 
-		if (res > 0)
-		  deferred = true;
-		goto found;
-	      }
+	      if (ix == RC_CONNECT)
+		{
+		  // CONNECT
+		  if (IsConnected ())
+		    err = -1;
+		  else if (auto *r = ConnectRequest (this, resolver, words))
+		    resolver = r;
+		  else
+		    err = -1;
+		}
+	      else
+		{
+		  if (!IsConnected ())
+		    err = -1;
+		  else if (int res = (std::get<1> (requestTable[ix])
+				      (this, resolver, words)))
+		    err = res;
+		}
+	      break;
+	    }
 	}
 
-      {
-	std::string msg {err > 0 ? "malformed"
-			 : !err ? "unrecognized"
-			 : IsConnected () ? "connected"
-			 : "unconnected"};
+      if (err || ix >= RC_HWM)
+	{
+	  // Some kind of error
+	  std::string msg;
 
-	msg.append (" request '");
-	read.LexedLine (msg);
-	msg.push_back ('\'');
-	resolver->ErrorResponse (this, std::move (msg));
-      }
-    found:;
+	  if (err > 0)
+	    msg = "error processing '";
+	  else if (ix >= RC_HWM)
+	    msg = "unrecognized '";
+	  else if (IsConnected () && ix == RC_CONNECT)
+	    msg = "already connected '";
+	  else if (!IsConnected () && ix != RC_CONNECT)
+	    msg = "not connected '";
+	  else
+	    msg = "malformed '";
+
+	  read.LexedLine (msg);
+	  msg.push_back ('\'');
+	  if (err > 0)
+	    {
+	      msg.push_back (' ');
+	      msg.append (strerror (err));
+	    }
+	  resolver->ErrorResponse (this, std::move (msg));
+	}
     }
 
-  return deferred;
+  return resolver;
 }
 
-int ConnectRequest (Server *s, Resolver *r, std::vector<std::string> &words)
+Resolver *ConnectRequest (Server *s,
+			  Resolver *r, std::vector<std::string> &words)
 {
   if (words.size () < 3 || words.size () > 4)
-    return -1;
+    return nullptr;
+
   if (words.size () == 3)
     words.emplace_back ("");
   char *eptr;
   unsigned long version = strtoul (words[1].c_str (), &eptr, 10);
   if (*eptr)
-    return -1;
+    return nullptr;
 
   return r->ConnectRequest (s, unsigned (version), words[2], words[3]);
 }
@@ -163,7 +188,7 @@ int ModuleRepoRequest (Server *s, Resolver *r,std::vector<std::string> &words)
 int ModuleExportRequest (Server *s, Resolver *r, std::vector<std::string> &words)
 {
   if (words.size () != 2 || words[1].empty ())
-    return -1;
+    return EINVAL;
 
   return r->ModuleExportRequest (s, words[1]);
 }
