@@ -38,7 +38,7 @@ inline bool IsAbsPath (char const *str)
 
 constexpr char DOT_REPLACE = ',';
 constexpr char COLON_REPLACE = '_';
-constexpr char const REPO_DIR[] = "gcm.cache";
+constexpr char const REPO_DIR[] = "cmi.cache";
 
 namespace Cody {
 

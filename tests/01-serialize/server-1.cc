@@ -16,14 +16,14 @@
 // These all fail because there's nothing in the server interpretting stuff
 /*
   OUT1-NEXT: ^HELLO 1 default	;
-  OUT1-NEXT: ^MODULE-REPO gcm.cache	;
-  OUT1-NEXT: ^MODULE-CMI bar.gcm	;
-  OUT1-NEXT: ^MODULE-CMI foo.gcm	;
-  OUT1-NEXT: ^ERROR 'unrecognized\_request\_
+  OUT1-NEXT: ^MODULE-REPO cmi.cache	;
+  OUT1-NEXT: ^MODULE-CMI bar.cmi	;
+  OUT1-NEXT: ^MODULE-CMI foo.cmi	;
+  OUT1-NEXT: ^ERROR 'unrecognized\_\'NOT\_
   OUT1-NEXT: ^INCLUDE-TEXT	;
   OUT1-NEXT: ^INCLUDE-TEXT	;
   OUT1-NEXT: ^OK
-  OUT1-NEXT: ^ERROR 'malformed\_request\_
+  OUT1-NEXT: ^ERROR 'error\_processing
 */
 // OUT1-NEXT:$EOF
 // ERR1-NEXT:$EOF
@@ -57,8 +57,9 @@ int main (int, char *[])
     if (e != EAGAIN && e != EINTR)
       break;
 
-  if (server.ParseRequests (&r))
-    std::cerr << "requests deferred\n";
+  auto *resp = server.ParseRequests (&r);
+  if (resp != &r)
+    std::cerr << "resolver changed\n";
   server.PrepareToWrite ();
 
   while (int e = server.Write ())
