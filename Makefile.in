@@ -29,6 +29,9 @@ recurse:
 else
 
 srcdir := @srcdir@
+bindir := @bindir@
+libdir := @libdir@
+includedir := @includedir@
 SUBDIRS := @SUBDIRS@
 SUBPROJS := @SUBPROJS@
 SHELL := zsh
@@ -37,6 +40,7 @@ CXX := @CXX@
 AR := @AR@
 DOXYGEN := @DOXYGEN@
 ALOY := @ALOY@
+INSTALL := $(srcdir)/install-sh
 
 # C++ compiler options
 CXXFLAGS := @CXXFLAGS@

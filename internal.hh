@@ -4,6 +4,7 @@
 
 #include "cody.hh"
 
+// C++
 #if __GNUC__ >= 10
 #define CODY_LOC_BUILTIN 1
 #elif __has_include (<source_location>)
