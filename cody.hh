@@ -268,7 +268,7 @@ private:
   union
   {
     FD fd;
-    Server *server;
+    Server *server_;
   };
   bool is_direct = false;
   bool is_connected = false;
@@ -280,7 +280,7 @@ public:
     : Client ()
   {
     is_direct = true;
-    server = s;
+    server_ = s;
   }
   Client (int from, int to = -1)
     : Client ()
@@ -289,8 +289,9 @@ public:
     fd.to = to < 0 ? from : to;
   }
   ~Client ();
-  Client (Client &&) = default;
-  Client &operator= (Client &&) = default;
+  // We have to provide our own move variants, because of the variant member.
+  Client (Client &&);
+  Client &operator= (Client &&);
 
 public:
   bool IsDirect () const
@@ -390,10 +391,10 @@ private:
   union
   {
     FD fd;
-    Resolver *direct;
+    Resolver *resolver_;
   };
-  bool is_connected = false;
   bool is_direct = false;
+  bool is_connected = false;
   Direction direction : 2;
 
 private:
@@ -409,12 +410,13 @@ public:
   Server (Resolver *r)
     : Server ()
   {
-    direct = r;
+    resolver_ = r;
     is_direct = true;
   }
   ~Server ();
-  Server (Server &&) = default;
-  Server &operator= (Server &&) = default;
+  // We have to provide our own move variants, because of the variant member.
+  Server (Server &&);
+  Server &operator= (Server &&);
 
 public:
   bool IsConnected () const

@@ -34,8 +34,42 @@ Client::Client ()
   fd.from = fd.to = -1;
 }
 
+Client::Client (Client &&src)
+  : write (std::move (src.write)),
+    read (std::move (src.read)),
+    corked (std::move (src.corked)),
+    is_direct (src.is_direct),
+    is_connected (src.is_connected)
+{
+  if (is_direct)
+    server_ = src.server_;
+  else
+    {
+      fd.from = src.fd.from;
+      fd.to = src.fd.to;
+    }
+}
+
 Client::~Client ()
 {
+}
+
+Client &Client::operator= (Client &&src)
+{
+  write = std::move (src.write);
+  read = std::move (src.read);
+  corked = std::move (src.corked);
+  is_direct = src.is_direct;
+  is_connected = src.is_connected;
+  if (is_direct)
+    server_ = src.server_;
+  else
+    {
+      fd.from = src.fd.from;
+      fd.to = src.fd.to;
+    }
+
+  return *this;
 }
 
 int Client::CommunicateWithServer ()
@@ -43,7 +77,7 @@ int Client::CommunicateWithServer ()
   write.PrepareToWrite ();
   read.PrepareToRead ();
   if (IsDirect ())
-    server->DirectProcess (write, read);
+    server_->DirectProcess (write, read);
   else
     {
       // Write the write buffer

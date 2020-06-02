@@ -41,16 +41,49 @@ Server::Server ()
 {
 }
 
+Server::Server (Server &&src)
+  : write (std::move (src.write)),
+    read (std::move (src.read)),
+    is_direct (src.is_direct),
+    is_connected (src.is_connected),
+    direction (src.direction)
+{
+  if (is_direct)
+    resolver_ = src.resolver_;
+  else
+    {
+      fd.from = src.fd.from;
+      fd.to = src.fd.to;
+    }
+}
+
 Server::~Server ()
 {
-  // FIXME: Disconnect?
+}
+
+Server &Server::operator= (Server &&src)
+{
+  write = std::move (src.write);
+  read = std::move (src.read);
+  is_direct = src.is_direct;
+  is_connected = src.is_connected;
+  direction = src.direction;
+  if (is_direct)
+    resolver_ = src.resolver_;
+  else
+    {
+      fd.from = src.fd.from;
+      fd.to = src.fd.to;
+    }
+
+  return *this;
 }
 
 void Server::DirectProcess (MessageBuffer &from, MessageBuffer &to)
 {
   read.PrepareToRead ();
   std::swap (read, from);
-  ParseRequests (direct);
+  ParseRequests (resolver_);
   write.PrepareToWrite ();
   std::swap (to, write);
 }
