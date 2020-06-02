@@ -244,7 +244,6 @@ struct FD
 
 class Server;
 
-// FIXME: we should probably ensure CONNECT is first
 class Client 
 {
 public:
