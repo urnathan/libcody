@@ -31,7 +31,7 @@ static Packet (*const responseTable[RC_HWM]) (std::vector<std::string> &) =
 
 Client::Client ()
 {
-  fd_from = fd_to = -1;
+  fd.from = fd.to = -1;
 }
 
 Client::~Client ()
@@ -47,11 +47,11 @@ int Client::CommunicateWithServer ()
   else
     {
       // Write the write buffer
-      while (int e = write.Write (fd_to))
+      while (int e = write.Write (fd.to))
 	if (e != EAGAIN && e != EINTR)
 	  return e;
       // Read the read buffer
-      while (int e = read.Read (fd_from))
+      while (int e = read.Read (fd.from))
 	if (e != EAGAIN && e != EINTR)
 	  return e;
     }

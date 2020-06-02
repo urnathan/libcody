@@ -236,6 +236,12 @@ enum RequestCode
   RC_HWM
 };
 
+struct FD
+{
+  int from;
+  int to;
+};
+
 class Server;
 
 // FIXME: we should probably ensure CONNECT is first
@@ -261,11 +267,7 @@ private:
   std::string corked; // Queued request tags
   union
   {
-    struct 
-    {
-      int fd_from;
-      int fd_to;
-    };
+    FD fd;
     Server *server;
   };
   bool is_direct = false;
@@ -283,8 +285,8 @@ public:
   Client (int from, int to = -1)
     : Client ()
   {
-    fd_from = from;
-    fd_to = to < 0 ? from : to;
+    fd.from = from;
+    fd.to = to < 0 ? from : to;
   }
   ~Client ();
   Client (Client &&) = default;
@@ -303,11 +305,11 @@ public:
 public:
   int GetFDRead () const
   {
-    return is_direct ? -1 : fd_from;
+    return is_direct ? -1 : fd.from;
   }
   int GetFDWrite () const
   {
-    return is_direct || fd_from == fd_to ? -1 : fd_to;
+    return is_direct || fd.from == fd.to ? -1 : fd.to;
   }
 
 public:
@@ -387,11 +389,7 @@ private:
   MessageBuffer read;
   union
   {
-    struct
-    {
-      int fd_from;
-      int fd_to;
-    };
+    FD fd;
     Resolver *direct;
   };
   bool is_connected = false;
@@ -405,8 +403,8 @@ public:
   Server (int from, int to = -1)
     : Server ()
   {
-    fd_from = from;
-    fd_to = to >= 0 ? to : from;
+    fd.from = from;
+    fd.to = to >= 0 ? to : from;
   }
   Server (Resolver *r)
     : Server ()
@@ -435,11 +433,11 @@ public:
   }
   int GetFDRead () const
   {
-    return is_direct ? -1 : fd_from;
+    return is_direct ? -1 : fd.from;
   }
   int GetFDWrite () const
   {
-    return is_direct || fd_from == fd_to ? -1 : fd_to;
+    return is_direct || fd.from == fd.to ? -1 : fd.to;
   }
 
 public:
@@ -476,7 +474,7 @@ public:
 public:
   int Write ()
   {
-    return write.Write (fd_to);
+    return write.Write (fd.to);
   }
   void PrepareToWrite ()
   {
@@ -485,7 +483,7 @@ public:
   }
   int Read ()
   {
-    return read.Read (fd_from);
+    return read.Read (fd.from);
   }
   void PrepareToRead ()
   {
