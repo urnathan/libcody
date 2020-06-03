@@ -23,7 +23,7 @@
   OUT1-NEXT: ^INCLUDE-TEXT	;
   OUT1-NEXT: ^INCLUDE-TEXT	;
   OUT1-NEXT: ^OK
-  OUT1-NEXT: ^ERROR 'error\_processing
+  OUT1-NEXT: ^ERROR 'malformed\_
 */
 // OUT1-NEXT:$EOF
 // ERR1-NEXT:$EOF

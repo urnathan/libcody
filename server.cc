@@ -99,7 +99,7 @@ Resolver *Server::ParseRequests (Resolver *resolver)
   direction = PROCESSING;
   while (!read.IsAtEnd ())
     {
-      bool err = 0;
+      int err = 0;
       unsigned ix = RC_HWM;
       if (!read.Lex (words))
 	{
