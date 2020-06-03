@@ -55,16 +55,16 @@ Initial initial;
 
 int main (int, char *[])
 {
-  Server server (0, 1);
+  Server server (&initial, 0, 1);
 
   while (int e = server.Read ())
     if (e != EAGAIN && e != EINTR)
       break;
 
-  auto *resp = server.ParseRequests (&initial);
-  if (resp == &handler)
+  server.ProcessRequests ();
+  if (server.GetResolver () == &handler)
     std::cerr << "resolver is handler\n";
-  else if (resp == &initial)
+  else if (server.GetResolver () == &initial)
     std::cerr << "resolver is initial\n";
   else
     std::cerr << "resolver is surprising\n";

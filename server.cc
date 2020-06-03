@@ -41,24 +41,20 @@ static std::tuple<char const *,
     {"INCLUDE-TRANSLATE", IncludeTranslateRequest},
   };
 
-Server::Server ()
+Server::Server (Resolver *r)
+  : resolver (r)
 {
 }
 
 Server::Server (Server &&src)
   : write (std::move (src.write)),
     read (std::move (src.read)),
-    is_direct (src.is_direct),
+    resolver (src.resolver),
     is_connected (src.is_connected),
     direction (src.direction)
 {
-  if (is_direct)
-    resolver_ = src.resolver_;
-  else
-    {
-      fd.from = src.fd.from;
-      fd.to = src.fd.to;
-    }
+  fd.from = src.fd.from;
+  fd.to = src.fd.to;
 }
 
 Server::~Server ()
@@ -69,16 +65,11 @@ Server &Server::operator= (Server &&src)
 {
   write = std::move (src.write);
   read = std::move (src.read);
-  is_direct = src.is_direct;
+  resolver = src.resolver;
   is_connected = src.is_connected;
   direction = src.direction;
-  if (is_direct)
-    resolver_ = src.resolver_;
-  else
-    {
-      fd.from = src.fd.from;
-      fd.to = src.fd.to;
-    }
+  fd.from = src.fd.from;
+  fd.to = src.fd.to;
 
   return *this;
 }
@@ -87,12 +78,12 @@ void Server::DirectProcess (MessageBuffer &from, MessageBuffer &to)
 {
   read.PrepareToRead ();
   std::swap (read, from);
-  resolver_ = ParseRequests (resolver_);
+  ProcessRequests ();
   write.PrepareToWrite ();
   std::swap (to, write);
 }
 
-Resolver *Server::ParseRequests (Resolver *resolver)
+void Server::ProcessRequests (void)
 {
   std::vector<std::string> words;
 
@@ -157,12 +148,10 @@ Resolver *Server::ParseRequests (Resolver *resolver)
 	  resolver->ErrorResponse (this, std::move (msg));
 	}
     }
-
-  return resolver;
 }
 
-Resolver *ConnectRequest (Server *s,
-			  Resolver *r, std::vector<std::string> &words)
+Resolver *ConnectRequest (Server *s, Resolver *r,
+			  std::vector<std::string> &words)
 {
   if (words.size () < 3 || words.size () > 4)
     return nullptr;

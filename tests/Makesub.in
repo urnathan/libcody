@@ -15,7 +15,7 @@ endif
 endif
 
 check:: tests/cody.defs $(TESTS)
-	+cd ${<D} && srcdir=$(srcdir)/tests JOUST=${<F} $(ALOY) -t kratos \
+	+cd ${<D} && srcbuilddir=$(srcdir)/tests JOUST=${<F} $(ALOY) -t kratos \
 	  -o cody -g ../$(srcdir)/tests/jouster $(TESTDIRS)
 
 tests/cody.defs: tests/Makesub

@@ -50,15 +50,15 @@ using namespace Cody;
 
 int main (int, char *[])
 {
-  Server server (0, 1);
   Resolver r;
+  Server server (&r, 0, 1);
 
   while (int e = server.Read ())
     if (e != EAGAIN && e != EINTR)
       break;
 
-  auto *resp = server.ParseRequests (&r);
-  if (resp != &r)
+  server.ProcessRequests ();
+  if (server.GetResolver () != &r)
     std::cerr << "resolver changed\n";
   server.PrepareToWrite ();
 

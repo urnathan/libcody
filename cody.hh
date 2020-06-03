@@ -309,7 +309,7 @@ public:
   }
   int GetFDWrite () const
   {
-    return is_direct || fd.from == fd.to ? -1 : fd.to;
+    return is_direct ? -1 : fd.to;
   }
 
 public:
@@ -394,33 +394,22 @@ public:
 private:
   MessageBuffer write;
   MessageBuffer read;
-  union
-  {
-    FD fd;
-    Resolver *resolver_;
-  };
-  bool is_direct = false;
+  Resolver *resolver;
+  FD fd;
   bool is_connected = false;
   Direction direction : 2;
 
 private:
-  Server ();
+  Server (Resolver *r);
 
 public:
-  Server (int from, int to = -1)
-    : Server ()
+  Server (Resolver *r, int from, int to = -1)
+    : Server (r)
   {
     fd.from = from;
     fd.to = to >= 0 ? to : from;
   }
-  Server (Resolver *r)
-    : Server ()
-  {
-    resolver_ = r;
-    is_direct = true;
-  }
   ~Server ();
-  // We have to provide our own move variants, because of the variant member.
   Server (Server &&);
   Server &operator= (Server &&);
 
@@ -428,10 +417,6 @@ public:
   bool IsConnected () const
   {
     return is_connected;
-  }
-  bool IsDirect () const
-  {
-    return is_direct;
   }
 
 public:
@@ -441,20 +426,20 @@ public:
   }
   int GetFDRead () const
   {
-    return is_direct ? -1 : fd.from;
+    return fd.from;
   }
   int GetFDWrite () const
   {
-    return is_direct || fd.from == fd.to ? -1 : fd.to;
+    return fd.to;
   }
   Resolver *GetResolver () const
   {
-    return is_direct ? resolver_ : nullptr;
+    return resolver;
   }
 
 public:
   void DirectProcess (MessageBuffer &from, MessageBuffer &to);
-  Resolver *ParseRequests (Resolver *);
+  void ProcessRequests ();
 
 public:
   void ErrorResponse (char const *error, size_t elen = ~size_t (0));
@@ -519,6 +504,8 @@ int ListenLocal (char const **, char const *name, unsigned backlog = 0);
 int OpenInet6 (char const **e, char const *name, int port);
 int ListenInet6 (char const **, char const *name, int port,
 		 unsigned backlog = 0);
+
+// FIXME: Mapping file utilities?
 
 }
 

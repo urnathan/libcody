@@ -191,6 +191,10 @@ int MessageBuffer::Read (int fd)
   if (count < 0)
     return errno;
 
+  if (!count)
+    // End of file
+    return -1;
+
   bool more = true;
   for (;;)
     {
