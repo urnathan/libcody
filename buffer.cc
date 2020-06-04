@@ -14,13 +14,18 @@
 
 // MessageBuffer code
 
-// Lines end with \n newline char
-// Continuations with \ preceding it
+// Lines consist of words and end with a NEWLINE (0xa) char
+// Whitespace characters are TAB (0x9) and SPACE (0x20)
+// Words consist of non-whitespace chars separated by whitespace.
+// Multiple lines in one transaction are indicated by ending non-final
+// lines with a SEMICOLON (0x3b) word, immediately before the NEWLINE
+// Continuations with ; preceding it
+// Words matching regexp [-+_/%.a-zA-Z0-9]+ need no quoting.
 // Quoting with '...'
 // Anything outside of [-+_/%.a-zA-Z0-9] needs quoting
-// Anything outside of [<space>, DEL) or \' or \\ needs escaping.
-// Escapes are \\, \', \n, \t, everything else as \<hex><hex>?
-// Spaces separate words
+// Anything outside of <= <space> or DEL or \' or \\ needs escaping.
+// Escapes are \\, \', \n, \t, \_, everything else as \<hex><hex>?
+// Spaces separate words, UTF8 encoding for non-ascii chars
 
 namespace Cody {
 
