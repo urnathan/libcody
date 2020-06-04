@@ -30,7 +30,10 @@ endif
 clean::
 	rm -rf dox dox.log
 
-check::
+install::
+	$(INSTALL) -d $(libdir) $(includedir)
+	$(INSTALL) libcody.a $(libdir)
+	$(INSTALL) $(srcdir)/cody.hh $(srcdir)/cody-conf.h $(includedir)
 
 ifeq ($(filter clean%,$(MAKECMDGOALS)),)
 -include $(LIBCODY.O:.o=.d)
