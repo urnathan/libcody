@@ -1,4 +1,4 @@
-# libCODY: COmpiler DYnamism<sup>a href="#1">1</a></sup>
+# libCODY: COmpiler DYnamism<sup><a href="#1">1</a></sup>
 
 Copyright (C) 2020 Nathan Sidwell, nathan@acm.org
 
@@ -26,11 +26,11 @@ import foo;
 ```
 
 At that import, the compiler needs<sup><a href="#2">2</a></sup> to
-load up the compiled serialization of module `foo`.  (a) where is that
-file and (b) does it even exist?  Unless the build system already
-knows the dependency graph, this might be a completely unknown module.
-Now, the build system knows how to build things, but it might not have
-complete information about the dependencies.  The ultimate source of
+load up the compiled serialization of module `foo`.  Where is that
+file?  Does it even exist?  Unless the build system already knows the
+dependency graph, this might be a completely unknown module.  Now, the
+build system knows how to build things, but it might not have complete
+information about the dependencies.  The ultimate source of
 dependencies is the source code being compiled, and specifying the
 same thing in multiple places is a recipe for build skew.
 
@@ -43,22 +43,22 @@ implementation has evolved and an update to p1184 will be forthcoming.
 
 ## Packet Encoding
 
-The protocol is transactional.  The compiler sends a block of one or
-more requests to the builder, then waits for a block of responses to
-all of those requests.  If the builder needs to compile something to
-satisfy a request, there may be some time before the response.  A
-builder may service multiple compilers concurrently, and it'll need
-some buffering scheme to deal with that.
+The protocol is turn-based.  The compiler sends a block of one or more
+requests to the builder, then waits for a block of responses to all of
+those requests.  If the builder needs to compile something to satisfy
+a request, there may be some time before the response.  A builder may
+service multiple compilers concurrently, and it'll need some buffering
+scheme to deal with that.
 
-When multiple requests are in a transaction, the responses will be in
-corresponding order.
+When multiple requests are in a block, the responses are also in a
+block, and in corresponding order.
 
 Every request has a response.
 
 Requests and responses are user-readable text.  It is not intended as
 a transmission medium to send large binary objects (such as compiled
 modules).  It is presumed the builder and the compiler share a file
-system, for that kind of thing.
+system, for that kind of thing.<sup><a href="#3">3</a></sup>
 
 Messages characters are encoded in UTF8.
 
@@ -79,11 +79,11 @@ Quoted words begin and end with APOSTROPHE (x27). Within the quoted
 word, BACKSLASH (x5c) is used as an escape mechanism, with the
 following meanings:
 
-* NEWLINE: \n
-* TAB: \t
-* SPACE: \_
-* APOSTROPHE: \'
-* BACKSLASH: \\
+* \\n - NEWLINE (0xa)
+* \\t - TAB (0x9)
+* \\_ - SPACE ( )
+* \\' - APOSTROPHE (')
+* \\\\ - BACKSLASH (\\)
 
 Characters in the range [0x00, 0x20) and 0x7f are encoded with one or
 two lowercase hex characters.  Octets in the range [0x80,0xff) are
@@ -91,10 +91,10 @@ UTF8 encodings and passed as such.
 
 Decoding should be more relaxed.  Unquoted words containing characters
 in the range [0x20,0xff] other than BACKSLASH or APOSTROPHE should be
-accepted.  In a quoted sequence \ followed by one or two lower case
+accepted.  In a quoted sequence, `\\` followed by one or two lower case
 hex characters decode to that octet.  Further, words can be
 constructed from a mixture of abutted quoted and unquoted sequences.
-For instance `FOO'\_'bar` would decode to the word `FOO bar`.
+For instance `FOO'\\_'bar` would decode to the word `FOO bar`.
 
 Notice that the block continuation marker of `;` is not a valid
 encoding of the word `;`, which would be `';'`.
@@ -135,7 +135,7 @@ An unsuccesful handshake.  The communication remains unconnected.
 
 There is nothing restricting a handshake to its own message block.  Of
 course, if the handshake fails, subsequent non-handshake messages in
-the block will fail (producing an error response).
+the block will fail (producing error responses).
 
 ### C++ Module Messages
 
@@ -266,9 +266,42 @@ CXXFLAGS=-g3`.
 The makefile will also parallelize according to the number of CPUs,
 unless you specify explicitly with a `-j` option.
 
-## Classes
+## API
 
-FIXME:
+The library defines entities in the `::Cody` namespace.
+
+There are 4 user-visible classes:
+
+* `Packet`: Responses to requests are `Packets`.  These have a code,
+  indicating the response kind, and a payload.
+
+* `Client`: The compiler-end of a connection.  Requests may be made
+  and responses are returned.
+
+* `Server`: The builder-end of a connection.  Requests may be waited
+  for, and responses made.  Builders that serve multiple concurrent
+  connections and spawn compilations to resolve dependencies may need
+  to derive from this class to provide response queuing.
+
+* `Resolver`: The processing engine of the builder side.  User code is
+  expected to derive from this class and provide virtual function
+  overriders to affect the semantics of the resolver.
+
+In addition there are a number of helpers to setup connections.
+
+Logically the Client and the Server communicate via a sequential
+channel.  The channel may be provided by:
+
+* two pipes, with different file descriptors for reading and writing
+  at each end.
+
+* a socket, which will use the same file descriptor for reading and
+  writing.  the socket can be created in a number of ways, including
+  Unix domain and IPv6 TCP for which helpers are provided.
+
+* a direct, in-process, connection, using buffer swapping.
+
+The communication channel is presumed reliable.
 
 ### Client
 
@@ -279,6 +312,8 @@ FIXME:
 ### Packet
 
 ## Helpers
+
+## Examples
 
 # Future Directions
 
@@ -294,10 +329,15 @@ that should be addressed.
 
 * C++20 entrypoints &mdash; std:string_view would be nice
 
-<a name="1">1</a>: or a small town in Wyoming
+<a name="1">1</a>: Or a small town in Wyoming
 
-<a name="2">2</a>: this describes one common implementation technique.
+<a name="2">2</a>: This describes one common implementation technique.
 The std itself doesn't require such serializations, but the ability to
 create them is kind of the point.  Also, 'compiler' is used where we
 mean any consumer of a module, and 'build system' where we mean any
 producer of a module.
+
+<a name="3">3</a>: Even when the builder is managing a distributed set
+of compilations, the builder must have a mechanism to get source files
+to, and object files from, the compilations.  That scheme can also
+transfer the CMI files.
