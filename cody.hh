@@ -37,26 +37,25 @@ private:
     std::vector<std::string> vector;
   };
   Category cat : 2;
-  bool done : 1;
 
 private:
   unsigned code = 0;
 
 public:
   Packet (unsigned c, size_t i = 0)
-    : integer (i), cat (INTEGER), done (false), code (c) 
+    : integer (i), cat (INTEGER), code (c) 
   {
   }
   Packet (unsigned c, std::string &&s)
-    : string (std::move (s)), cat (STRING), done (false), code (c)
+    : string (std::move (s)), cat (STRING), code (c)
   {
   }
   Packet (unsigned c, std::string const &s)
-    : string (s), cat (STRING), done (false), code (c)
+    : string (s), cat (STRING), code (c)
   {
   }
   Packet (unsigned c, std::vector<std::string> &&v)
-    : vector (std::move (v)), cat (VECTOR), done (false), code (c)
+    : vector (std::move (v)), cat (VECTOR), code (c)
   {
   }
   // No non-move constructor from a vector.  You should not be doing
@@ -80,57 +79,13 @@ public:
   }
 
 private:
-  void Destroy ()
-  {
-    switch (cat)
-      {
-      case STRING:
-	// Silly scope destructor name rules
-	using S = std::string;
-	string.~S ();
-	break;
-
-      case VECTOR:
-	using V = std::vector<std::string>;
-	vector.~V ();
-	break;
-
-      default:;
-      }
-  }
-  void Create (Packet &&t)
-  {
-    cat = t.cat;
-    done = t.done;
-    code = t.code;
-    switch (cat)
-      {
-      case STRING:
-	new (&string) std::string (std::move (t.string));
-	break;
-
-      case VECTOR:
-	new (&vector) std::vector<std::string> (std::move (t.vector));
-	break;
-
-      default:
-	integer = t.integer;
-	break;
-      }
-  }
+  void Create (Packet &&t);
+  void Destroy ();
 
 public:
   unsigned GetCode () const
   {
     return code;
-  }
-  bool IsDone () const
-  {
-    return done;
-  }
-  void SetDone ()
-  {
-    done = true;
   }
   Category GetCategory () const
   {
@@ -250,16 +205,15 @@ public:
   // Packet codes
   enum PacketCode
   {
-    PC_CORKED,  // messages are corked
-    PC_CONNECT,
-    PC_ERROR,   // token is error string
-    PC_MODULE_REPO,   // token, if non-empty, is repo string
-    PC_MODULE_CMI,    // token is CMI file
-    PC_MODULE_COMPILED, // Module compilation ack
-    PC_INCLUDE_TRANSLATE, // token is boolean false for text or
-			  // (possibly empty) string for CMI
+    PC_CORKED,		// messages are corked
+    PC_CONNECT,		// connection, packet is ?
+    PC_ERROR,		// packet is error string
+    PC_MODULE_REPO,	// packet, if non-empty, is repo string
+    PC_MODULE_CMI,	// packet is string CMI file
+    PC_MODULE_COMPILED, // module compilation ack
+    PC_INCLUDE_TRANSLATE, // packet is boolean, true for module
   };
-  
+
 private:
   MessageBuffer write;
   MessageBuffer read;
