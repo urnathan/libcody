@@ -232,6 +232,40 @@ response also indicates include translation should occur, and provides
 the name of the CMI to read, this possibly elides a subsequent
 `MODULE-IMPORT` request.
 
+## Building libCody
+
+Libcody is written in C++11.
+
+It uses the usual `configure`, `make`, `make check` & `make install`
+sequence.  Excitingly it uses my own `joust` testharness, so you'll
+need to build and install that somewhere.  Or you can add a `joust`
+symlink from the libcody source directory to joust's source and the
+right things will happen.
+
+The following configure options are available, in addition to the usual set:
+
+* `--enable-checking` Compile with assert-like checking.  Defaults to on.
+
+* `--with-tools=DIR`  Prepend `DIR/bin` to `PATH` when building (`DIR`
+can already include the trailing `/bin`, and the right things happen).
+Use this if you need to point to non-standard tools that you usually
+don't have in your path.  This path is also used when the configure
+script searches for programs.
+
+* `--with-compiler=NAME`  Specify a particular compiler to use.
+Usually what autoconf finds is sufficiently usable.
+
+* `--with-bugurl=URL` Override the bugreporting URL.  Do this if
+you're providing libcody as part of a package that /you/ are
+supporting.
+
+When building, you can override the default optimization flags with
+`CXXFLAGS=$flags`.  I often build a debuggable library with `make
+CXXFLAGS=-g3`.
+
+The makefile will also parallelize according to the number of CPUs,
+unless you specify explicitly with a `-j` option.
+
 ## Classes
 
 FIXME:
@@ -258,9 +292,12 @@ that should be addressed.
 
 * Link-time compilations
 
+* C++20 entrypoints &mdash; std:string_view would be nice
 
-<a name="1">1</a>: or a small town in Wyoming <a name="2">2</a>: this
-describes one common implementation technique.  The std itself doesn't
-require such serializations, but the ability to create them is kind of
-the point.  Also, 'compiler' is used where we mean any consumer of a
-module, and 'build system' where we mean any producer of a module.
+<a name="1">1</a>: or a small town in Wyoming
+
+<a name="2">2</a>: this describes one common implementation technique.
+The std itself doesn't require such serializations, but the ability to
+create them is kind of the point.  Also, 'compiler' is used where we
+mean any consumer of a module, and 'build system' where we mean any
+producer of a module.
