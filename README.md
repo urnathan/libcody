@@ -38,7 +38,7 @@ Hence, a protocol by which a compiler can query a build system.  This
 was originally described in <a
 href="https://wg21.link/p1184r1">p1184r1:A Module Mapper</a>.  Along
 with a proof-of-concept hack in GNUmake, described in <a
-href="https://wg21.link/p1602: Make Me A Module</a>. The current
+href="https://wg21.link/p1602">p1602:Make Me A Module</a>. The current
 implementation has evolved and an update to p1184 will be forthcoming.
 
 ## Packet Encoding
@@ -103,7 +103,13 @@ It is recommended that words are separated by single SPACE characters.
 
 ## Messages
 
-The message descriptions use `$metavariable` examples
+The message descriptions use `$metavariable` examples.
+
+All messages may result in an error response:
+
+`ERROR $message`
+
+The message is a human-readable string.
 
 ### Handshake
 
@@ -112,7 +118,7 @@ The first message is a handshake:
 `HELLO $version $compiler $ident`
 
 The `$version` is a numeric value, currently `.  `$compiler` identifies
-the compiler -- builders may need to keep compiled modules from
+the compiler &mdash; builders may need to keep compiled modules from
 different compilers separate.  `$ident` is an identifer the builder
 might use to identify the compilation it is communicting with.
 
@@ -125,19 +131,106 @@ messages may be exchanged.
 
 `ERROR $message`
 
-An unsuccesful handshate.  The communication remains unconnected.
+An unsuccesful handshake.  The communication remains unconnected.
 
-### C++ Module Packets
+There is nothing restricting a handshake to its own message block.  Of
+course, if the handshake fails, subsequent non-handshake messages in
+the block will fail (producing an error response).
 
-`MODULE-REPO`
+### C++ Module Messages
+
+A set of messages are specific to C++ modules
+
+#### Repository
+
+* `MODULE-REPO`
+
+Request the module repository location (if any).  The expected response is:
+
+`MODULE-REPO $directory`
+
+All non-absolute CMI file names are relative to the repository.  (CMI
+file names are usually relative names.)
+
+#### Exporting
+
+A compilation of a module interface, partition or header unit can
+inform the builder with:
 
 `MODULE-EXPORT $module`
 
-`MODULE-IMPORT $module`
+This will result in a response naming the Compiled Module Interface
+file to write:
+
+`MODULE-CMI $cmi`
+
+The `MODULE-EXPORT` request does not indicate the module has been
+successfully compiled.  At most one `MODULE-EXPORT` is to be made, and
+as the connection is for a single compilation, the builder may infer
+dependency relationships between the module being generated and import
+requests made.
+
+Successful compilation of an interface is indicated with a subsequent:
+
+Named module names and header unit names are distinguished by making
+the latter unambiguously look like file names.  Firstly, they must be
+fully resolved according to the compiler's usual include path.  If
+that results in an absolute name file name (beginning with `/`, or
+certain other OS-specific sequences), all is well.  Otherwise a
+relative file name must be prefixed by `./` to be distinguished from a
+similarly named named module.  This prefixing must occur, even if the
+header-unit's name contains characters that cannot appear in a named
+module's name.
 
 `MODULE-COMPILED $module`
 
+FIXME: do we need the module here?
+
+request.  This indicates the CMI file has been written to disk, so
+that any other compilations waiting on it may proceed.  A single
+response:
+
+`OK`
+
+is expected.  Compilation failure can be inferred by lack of a
+`MODULE-COMPILED` request.  It is presumed the builder can determine
+this, as it is also responsible for launching and reaping the compiler
+invocations themselves.
+
+#### Importing
+
+Importation, inculding that of header-units, uses:
+
+`MODULE-IMPORT $module`
+
+This response with a `MODULE-CMI` of the same form as the
+`MODULE-EXPORT` request.  Should the builder have to invoke a
+compilation to produce the CMI, the response should be delayed until
+that occurs.  If such a compilation fails, an error response should be
+provided to the requestor &mdash; which will then presumably fail in
+some manner.
+
+#### Include Translation
+
+Include translation can be determined with:
+
 `INCLUDE-TRANSLATE $header`
+
+The header name, `$header`, is the fully resolved header name, in the
+above-mentioned unambigous filename form.  The response will be:
+
+`INCLUDE-TEXT`
+
+to indicate include translation should not occur (the usual textual
+inclusion occurs).  Or:
+
+`INCLUDE-IMPORT`
+
+to indicate the include directive should be replaced by an import
+declaration of the resolved header-unit.  Finally `MODULE-CMI`
+response also indicates include translation should occur, and provides
+the name of the CMI to read, this possibly elides a subsequent
+`MODULE-IMPORT` request.
 
 ## Classes
 
@@ -152,6 +245,19 @@ FIXME:
 ### Packet
 
 ## Helpers
+
+# Future Directions
+
+* Current Directory syncing?  There is no mechanism to check the
+builder and the compiler have the same working directory.  Perhaps
+that should be addressed.
+
+* Include path canonization and/or header file lookup
+
+* Generated header file lookup/construction
+
+* Link-time compilations
+
 
 <a name="1">1</a>: or a small town in Wyoming <a name="2">2</a>: this
 describes one common implementation technique.  The std itself doesn't
