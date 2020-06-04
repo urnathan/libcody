@@ -73,7 +73,8 @@ a serial connection can determine whether a block is complete without
 decoding the messages.
 
 Words containing characters in the set [-+_/%.A-Za-z0-9] need not be
-quoted.  Words containing characters outside that set should be quoted.
+quoted.  Words containing characters outside that set should be
+quoted.  A zero-length word may be achieved with `''`
 
 Quoted words begin and end with APOSTROPHE (x27). Within the quoted
 word, BACKSLASH (x5c) is used as an escape mechanism, with the
@@ -91,10 +92,10 @@ UTF8 encodings and passed as such.
 
 Decoding should be more relaxed.  Unquoted words containing characters
 in the range [0x20,0xff] other than BACKSLASH or APOSTROPHE should be
-accepted.  In a quoted sequence, `\\` followed by one or two lower case
+accepted.  In a quoted sequence, `\` followed by one or two lower case
 hex characters decode to that octet.  Further, words can be
 constructed from a mixture of abutted quoted and unquoted sequences.
-For instance `FOO'\\_'bar` would decode to the word `FOO bar`.
+For instance `FOO'\_'bar` would decode to the word `FOO bar`.
 
 Notice that the block continuation marker of `;` is not a valid
 encoding of the word `;`, which would be `';'`.
@@ -143,14 +144,17 @@ A set of messages are specific to C++ modules
 
 #### Repository
 
-* `MODULE-REPO`
+All non-absolute CMI file names are relative to a repository.  (CMI
+file names are usually relative names.)  The respository may be
+determined with:
 
-Request the module repository location (if any).  The expected response is:
+`MODULE-REPO`
+
+The expected response is:
 
 `MODULE-REPO $directory`
 
-All non-absolute CMI file names are relative to the repository.  (CMI
-file names are usually relative names.)
+The `$directory` may be an empty word, which is equivalent to `.`.
 
 #### Exporting
 
@@ -187,8 +191,9 @@ module's name.
 FIXME: do we need the module here?
 
 request.  This indicates the CMI file has been written to disk, so
-that any other compilations waiting on it may proceed.  A single
-response:
+that any other compilations waiting on it may proceed.  Depending on
+compiler implementation, the CMI may be written before the compilation
+completes.  A single response:
 
 `OK`
 
@@ -203,9 +208,9 @@ Importation, inculding that of header-units, uses:
 
 `MODULE-IMPORT $module`
 
-This response with a `MODULE-CMI` of the same form as the
-`MODULE-EXPORT` request.  Should the builder have to invoke a
-compilation to produce the CMI, the response should be delayed until
+This responds with a `MODULE-CMI` of the same form as the
+`MODULE-EXPORT` request's response.  Should the builder have to invoke
+a compilation to produce the CMI, the response should be delayed until
 that occurs.  If such a compilation fails, an error response should be
 provided to the requestor &mdash; which will then presumably fail in
 some manner.
@@ -237,27 +242,27 @@ the name of the CMI to read, this possibly elides a subsequent
 Libcody is written in C++11.
 
 It uses the usual `configure`, `make`, `make check` & `make install`
-sequence.  Excitingly it uses my own `joust` testharness, so you'll
-need to build and install that somewhere.  Or you can add a `joust`
-symlink from the libcody source directory to joust's source and the
-right things will happen.
+sequence.  Excitingly it uses my own `joust` test harness, so you'll
+need to build and install that somewhere, if you want the comfort of
+testing.  Or you can add a `joust` symlink from the libcody source
+directory to joust's source and the right things will happen.
 
 The following configure options are available, in addition to the usual set:
 
 * `--enable-checking` Compile with assert-like checking.  Defaults to on.
 
-* `--with-tools=DIR`  Prepend `DIR/bin` to `PATH` when building (`DIR`
-can already include the trailing `/bin`, and the right things happen).
-Use this if you need to point to non-standard tools that you usually
-don't have in your path.  This path is also used when the configure
-script searches for programs.
+* `--with-tools=DIR` Prepend `DIR/bin` to `PATH` when building (`DIR`
+  can already include the trailing `/bin`, and the right things
+  happen).  Use this if you need to point to non-standard tools that
+  you usually don't have in your path.  This path is also used when
+  the configure script searches for programs.
 
-* `--with-compiler=NAME`  Specify a particular compiler to use.
-Usually what autoconf finds is sufficiently usable.
+* `--with-compiler=NAME` Specify a particular compiler to use.
+  Usually what configure finds is sufficiently usable.
 
 * `--with-bugurl=URL` Override the bugreporting URL.  Do this if
-you're providing libcody as part of a package that /you/ are
-supporting.
+  you're providing libcody as part of a package that /you/ are
+  supporting.
 
 When building, you can override the default optimization flags with
 `CXXFLAGS=$flags`.  I often build a debuggable library with `make
@@ -297,19 +302,19 @@ channel.  The channel may be provided by:
 
 * a socket, which will use the same file descriptor for reading and
   writing.  the socket can be created in a number of ways, including
-  Unix domain and IPv6 TCP for which helpers are provided.
+  Unix domain and IPv6 TCP, for which helpers are provided.
 
 * a direct, in-process, connection, using buffer swapping.
 
 The communication channel is presumed reliable.
 
-### Client
+### `Client`
 
-### Server
+### `Server`
 
-### Resolver
+### `Resolver`
 
-### Packet
+### `Packet`
 
 ## Helpers
 
@@ -317,9 +322,9 @@ The communication channel is presumed reliable.
 
 # Future Directions
 
-* Current Directory syncing?  There is no mechanism to check the
-builder and the compiler have the same working directory.  Perhaps
-that should be addressed.
+* Current Directory.  There is no mechanism to check the builder and
+  the compiler have the same working directory.  Perhaps that should
+  be addressed.
 
 * Include path canonization and/or header file lookup
 
@@ -328,6 +333,10 @@ that should be addressed.
 * Link-time compilations
 
 * C++20 entrypoints &mdash; std:string_view would be nice
+
+* Exception-safety audit.  Exceptions are not used, but memory
+  exhaustion could happen.  And perhaps user's resolver code employs
+  exceptions?
 
 <a name="1">1</a>: Or a small town in Wyoming
 
