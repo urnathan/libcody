@@ -42,7 +42,7 @@ Client::Client (Client &&src)
     is_connected (src.is_connected)
 {
   if (is_direct)
-    server_ = src.server_;
+    server = src.server;
   else
     {
       fd.from = src.fd.from;
@@ -62,7 +62,7 @@ Client &Client::operator= (Client &&src)
   is_direct = src.is_direct;
   is_connected = src.is_connected;
   if (is_direct)
-    server_ = src.server_;
+    server = src.server;
   else
     {
       fd.from = src.fd.from;
@@ -77,7 +77,7 @@ int Client::CommunicateWithServer ()
   write.PrepareToWrite ();
   read.PrepareToRead ();
   if (IsDirect ())
-    server_->DirectProcess (write, read);
+    server->DirectProcess (write, read);
   else
     {
       // Write the write buffer

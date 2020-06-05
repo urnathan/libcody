@@ -144,9 +144,9 @@ A set of messages are specific to C++ modules
 
 #### Repository
 
-All non-absolute CMI file names are relative to a repository.  (CMI
-file names are usually relative names.)  The respository may be
-determined with:
+All relative CMI file names are relative to a repository.  (There are
+usually no abosolute CMI files).  The respository may be determined
+with:
 
 `MODULE-REPO`
 
@@ -174,8 +174,6 @@ as the connection is for a single compilation, the builder may infer
 dependency relationships between the module being generated and import
 requests made.
 
-Successful compilation of an interface is indicated with a subsequent:
-
 Named module names and header unit names are distinguished by making
 the latter unambiguously look like file names.  Firstly, they must be
 fully resolved according to the compiler's usual include path.  If
@@ -185,6 +183,19 @@ relative file name must be prefixed by `./` to be distinguished from a
 similarly named named module.  This prefixing must occur, even if the
 header-unit's name contains characters that cannot appear in a named
 module's name.
+
+It is expected that absolute header-unit names convert to relative CMI
+names, to keep all CMIs within the CMI repository.  This means that
+steps must be taken to distinguish the CMIs for `/here` from `./here`,
+and this can be achieved by replacing the leading `./` directory with
+`,/`, which is visually similar but does not have the self-reference
+semantics of dot.  Likewise, header-unit names containing `..`
+directories, can be remapped to `,,`.  (When symlinks are involved
+`bob/dob/..` might not be `bob`, of course.)  C++ header-unit
+semantics are such that there is no need to resolve multiple ways of
+spelling a particular header-unit to a unique CMI file.
+
+Successful compilation of an interface is indicated with a subsequent:
 
 `MODULE-COMPILED $module`
 

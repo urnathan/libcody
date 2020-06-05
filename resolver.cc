@@ -36,8 +36,8 @@ inline bool IsAbsPath (char const *str)
 }
 #endif
 
-constexpr char DOT_REPLACE = ',';
-constexpr char COLON_REPLACE = '_';
+constexpr char DOT_REPLACE = ','; // Replace . directories
+constexpr char COLON_REPLACE = '-'; // Replace : (partition char) 
 constexpr char const REPO_DIR[] = "cmi.cache";
 
 namespace Cody {

@@ -221,7 +221,7 @@ private:
   union
   {
     FD fd;
-    Server *server_;
+    Server *server;
   };
   bool is_direct = false;
   bool is_connected = false;
@@ -233,7 +233,7 @@ public:
     : Client ()
   {
     is_direct = true;
-    server_ = s;
+    server = s;
   }
   Client (int from, int to = -1)
     : Client ()
@@ -264,6 +264,10 @@ public:
   int GetFDWrite () const
   {
     return is_direct ? -1 : fd.to;
+  }
+  Server *GetServer () const
+  {
+    return is_direct ? server : nullptr;
   }
 
 public:
@@ -353,10 +357,8 @@ private:
   bool is_connected = false;
   Direction direction : 2;
 
-private:
-  Server (Resolver *r);
-
 public:
+  Server (Resolver *r);
   Server (Resolver *r, int from, int to = -1)
     : Server (r)
   {
