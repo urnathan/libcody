@@ -588,7 +588,6 @@ ac_unique_file="README.md"
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
 CONFIG_FILES
-SUBDIRS
 configure_args
 ALOY
 DOXYGEN
@@ -2877,16 +2876,20 @@ fi
 
 
 
+for generated in config.h.in configure ; do
+  if test $srcdir/configure.ac -nt $srcdir/$generated ; then
+    touch $srcdir/$generated
+  fi
+done
+
 CONFIG_FILES="Makefile gdbinit dox.cfg"
-for make in Makesub tests/Makesub
-do
+for make in Makesub tests/Makesub ; do
   test -f ${srcdir}/$make.in && CONFIG_FILES+=" $make"
 done
 ac_config_files="$ac_config_files $CONFIG_FILES"
 
 
 configure_args=$ac_configure_args
-
 
 
 
