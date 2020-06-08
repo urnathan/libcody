@@ -3,9 +3,9 @@
 # License: LGPL v3.0 or later
 
 ifeq (0,$(MAKELEVEL))
-ifneq (,@tools@)
-$(info Prepending @tools@ to PATH)
-PATH := @tools@:$(PATH)
+ifneq (,@toolbin@)
+$(info Prepending @toolbin@ to PATH)
+PATH := @toolbin@:$(PATH)
 export PATH
 endif
 
@@ -35,7 +35,6 @@ bindir := @bindir@
 libdir := @libdir@
 includedir := @includedir@
 SUBDIRS := @SUBDIRS@
-SUBPROJS := @SUBPROJS@
 SHELL := zsh
 
 CXX := @CXX@
@@ -90,25 +89,11 @@ vpath %.cc $(srcdir)
 	$(CXX) $(strip $(CXXOPTS) -MMD -MP \
 	  -MF ${@:.o=.d} $(call SRC_CXXFLAGS,$<)) -c -o $@ $<
 
-all:: Makefile $(addprefix all.,$(SUBPROJS) $(SUBDIRS))
+all:: Makefile $(addprefix all.,$(SUBDIRS))
 
 check:: Makefile $(addprefix check.,$(SUBPROJS) $(SUBDIRS))
 
 clean:: Makefile $(addprefix clean.,$(SUBPROJS) $(SUBDIRS))
-
-$(addprefix all.,$(SUBPROJS)): all.%: %/Makefile
-	$(MAKE) -C $(@:all.%=%) all
-
-$(addprefix check.,$(SUBPROJS)): check.%: %/Makefile
-	$(MAKE) -C $(@:check.%=%) check
-
-$(addprefix clean.,$(SUBPROJS)): clean.%: %/Makefile
-	$(MAKE) -C $(@:clean.%=%) clean
-
-$(addsuffix /Makefile,$(SUBPROJS)): %/Makefile: $(srcdir)/%/configure
-	pfx=$$(echo $(@D)/ | sed 's+[^/]*/+../+g') ;\
-	mkdir -p $(@D); pushd $(@D); \
-	$${pfx}$< --srcdir=$${pfx}$(<D) @configure_args@
 
 all:: .gdbinit
 
@@ -168,8 +153,5 @@ clean::
 	rm -f $(shell find $(srcdir) -name '*~')
 
 .PHONY: all check clean distclean maintainer-clean
-.PHONY: $(addprefix all.,$(SUBPROJS))
-.PHONY: $(addprefix check.,$(SUBPROJS))
-.PHONY: $(addprefix clean.,$(SUBPROJS))
 
 endif

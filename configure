@@ -589,7 +589,6 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 CONFIG_FILES
 SUBDIRS
-SUBPROJS
 configure_args
 ALOY
 DOXYGEN
@@ -601,7 +600,6 @@ CPPFLAGS
 LDFLAGS
 CXXFLAGS
 CXX
-tools
 host_os
 host_vendor
 host_cpu
@@ -651,7 +649,6 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
-with_tools
 with_compiler
 with_bugurl
 enable_checking
@@ -1283,7 +1280,6 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-tools=DIR        tool directory
   --with-compiler=NAME    which compiler to use
   --with-bugurl=URL       where to report bugs
 
@@ -1770,12 +1766,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 # Copyright (C) 2019-2020 Nathan Sidwell, nathan@acm.org
 # License: LGPL v3.0 or later
 
-# CODY_SUBPROJ(NAME,[FOUND=],[NOT-FOUND=])
 
 
-
-
-# CODY_SUBPROJ(NAME,[FOUND=],[NOT-FOUND=])
 
 
 
@@ -1892,26 +1884,7 @@ case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking tools" >&5
-$as_echo_n "checking tools... " >&6; }
-
-# Check whether --with-tools was given.
-if test "${with_tools+set}" = set; then :
-  withval=$with_tools; if test "$withval" = "yes" ; then
-  as_fn_error $? "tool location not specified" "$LINENO" 5
-elif test "$withval" = "no" ; then
-  :
-elif ! test -d "${withval%/bin}/bin" ; then
-  as_fn_error $? "tools not present" "$LINENO" 5
-else
-  tools=${withval%/bin}/bin
-fi
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $tools" >&5
-$as_echo "$tools" >&6; }
-PATH=$tools${tools+:}$PATH
-
+CODY_TOOL_BIN
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -2492,6 +2465,8 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+CODY_TOOL_LIB
+CODY_TOOL_INC
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking bugurl" >&5
 $as_echo_n "checking bugurl... " >&6; }
@@ -2515,7 +2490,6 @@ $as_echo "$BUGURL" >&6; }
 cat >>confdefs.h <<_ACEOF
 #define BUGURL "$BUGURL"
 _ACEOF
-
 
 # Check whether --enable-checking was given.
 if test "${enable_checking+set}" = set; then :
@@ -2821,36 +2795,16 @@ fi
 
 
 CONFIG_FILES="Makefile gdbinit dox.cfg"
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking subproject joust" >&5
-$as_echo_n "checking subproject joust... " >&6; }
-if test -d ${srcdir}/joust; then
-  SUBPROJS+=" joust"
-  if test -h ${srcdir}/joust; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: by reference" >&5
-$as_echo "by reference" >&6; }
-  else
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: by value" >&5
-$as_echo "by value" >&6; }
-  fi
-  ALOY=aloy
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not present" >&5
-$as_echo "not present" >&6; }
-
-fi
-
-configure_args=$ac_configure_args
-
-
-
-
-
 for make in Makesub tests/Makesub
 do
   test -f ${srcdir}/$make.in && CONFIG_FILES+=" $make"
 done
-
 ac_config_files="$ac_config_files $CONFIG_FILES"
+
+
+configure_args=$ac_configure_args
+
+
 
 
 cat >confcache <<\_ACEOF
