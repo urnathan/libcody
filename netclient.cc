@@ -70,7 +70,7 @@ int OpenInet6 (char const **e, char const *name, int port)
   fd = socket (AF_INET6, SOCK_STREAM, 0);
   if (fd < 0)
     {
-      errstr = "creating socket";
+      errstr = "socket";
 
     fail:;
       int err = errno;
@@ -119,7 +119,7 @@ int OpenInet6 (char const **e, char const *name, int port)
 	else if (!connect (fd, next->ai_addr, next->ai_addrlen))
 	  goto done;
       }
-  errstr = "connecting socket";
+  errstr = "connecting";
   goto fail;
 
  done:;

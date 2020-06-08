@@ -2,7 +2,7 @@
 # Copyright (C) 2019-2020 Nathan Sidwell, nathan@acm.org
 # License: LGPL v3.0 or later
 
-AC_DEFUN([CODY_TOOLBIN],
+AC_DEFUN([CODY_TOOL_BIN],
 [AC_MSG_CHECKING([tool binaries])
 AC_ARG_WITH([toolbin],
 AS_HELP_STRING([--with-toolbin=DIR],[tool bin directory]),
@@ -21,7 +21,7 @@ if test "$toolbin" ; then
 fi
 AC_SUBST(toolbin)])
 
-AC_DEFUN([CODY_TOOLINC],
+AC_DEFUN([CODY_TOOL_INC],
 [AC_MSG_CHECKING([tool include])
 AC_ARG_WITH([toolinc],
 AS_HELP_STRING([--with-toolinc=DIR],[tool include directory]),
@@ -45,7 +45,7 @@ if test "$toolinc" ; then
   CXX+=" -I $toolinc"
 fi])
 
-AC_DEFUN([CODY_TOOLLIB],
+AC_DEFUN([CODY_TOOL_LIB],
 [AC_MSG_CHECKING([tool libraries])
 AC_ARG_WITH([toollib],
 AS_HELP_STRING([--with-toollib=DIR],[tool library directory]),

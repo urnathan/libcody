@@ -600,6 +600,7 @@ CPPFLAGS
 LDFLAGS
 CXXFLAGS
 CXX
+toolbin
 host_os
 host_vendor
 host_cpu
@@ -649,7 +650,10 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
+with_toolbin
 with_compiler
+with_toollib
+with_toolinc
 with_bugurl
 enable_checking
 '
@@ -1280,7 +1284,10 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-toolbin=DIR      tool bin directory
   --with-compiler=NAME    which compiler to use
+  --with-toollib=DIR      tool library directory
+  --with-toolinc=DIR      tool include directory
   --with-bugurl=URL       where to report bugs
 
 Some influential environment variables:
@@ -1884,7 +1891,28 @@ case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
 
-CODY_TOOL_BIN
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking tool binaries" >&5
+$as_echo_n "checking tool binaries... " >&6; }
+
+# Check whether --with-toolbin was given.
+if test "${with_toolbin+set}" = set; then :
+  withval=$with_toolbin; if test "$withval" = "yes" ; then
+  as_fn_error $? "tool bin location not specified" "$LINENO" 5
+elif test "$withval" = "no" ; then
+  :
+elif ! test -d "${withval%/bin}/bin" ; then
+  as_fn_error $? "tool bin not present" "$LINENO" 5
+else
+  toolbin=${withval%/bin}/bin
+fi
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $toolbin" >&5
+$as_echo "$toolbin" >&6; }
+if test "$toolbin" ; then
+  PATH="$toolbin:$PATH"
+fi
+
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -2465,8 +2493,63 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-CODY_TOOL_LIB
-CODY_TOOL_INC
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking tool libraries" >&5
+$as_echo_n "checking tool libraries... " >&6; }
+
+# Check whether --with-toollib was given.
+if test "${with_toollib+set}" = set; then :
+  withval=$with_toollib; if test "$withval" = "yes" ; then
+  as_fn_error $? "tool library location not specified" "$LINENO" 5
+elif test "$withval" = "no" ; then
+  if test "${toolbin}" ; then
+    toollib="${toolbin%/bin}/lib"
+    if os=$(CXX -print-multi-os-directory 2>/dev/null) ; then
+      toollib+="/${os}"
+    fi
+    if ! test -d "$toollib" ; then
+      # was not found
+      toollib=
+    fi
+  fi
+elif ! test -d "${withval}" ; then
+  as_fn_error $? "tool library not present" "$LINENO" 5
+else
+  toollib=${withval}
+fi
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $toollib" >&5
+$as_echo "$toollib" >&6; }
+if test "$toollib" ; then
+  LDFLAGS+="-L $toollib"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking tool include" >&5
+$as_echo_n "checking tool include... " >&6; }
+
+# Check whether --with-toolinc was given.
+if test "${with_toolinc+set}" = set; then :
+  withval=$with_toolinc; if test "$withval" = "yes" ; then
+  as_fn_error $? "tool include location not specified" "$LINENO" 5
+elif test "$withval" = "no" ; then
+  if test "${toolbin}" ; then
+    toolinc="${toolbin%/bin}/include"
+    if ! test -d "$toolinc" ; then
+      # was not found
+      toolinc=
+    fi
+  fi
+elif ! test -d "${withval}" ; then
+  as_fn_error $? "tool include not present" "$LINENO" 5
+else
+  toolinc=${withval}
+fi
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $toolinc" >&5
+$as_echo "$toolinc" >&6; }
+if test "$toolinc" ; then
+  CXX+=" -I $toolinc"
+fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking bugurl" >&5
 $as_echo_n "checking bugurl... " >&6; }
