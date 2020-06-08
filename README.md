@@ -118,7 +118,7 @@ The first message is a handshake:
 
 `HELLO $version $compiler $ident`
 
-The `$version` is a numeric value, currently `.  `$compiler` identifies
+The `$version` is a numeric value, currently `1`.  `$compiler` identifies
 the compiler &mdash; builders may need to keep compiled modules from
 different compilers separate.  `$ident` is an identifer the builder
 might use to identify the compilation it is communicting with.
@@ -255,18 +255,21 @@ Libcody is written in C++11.
 It uses the usual `configure`, `make`, `make check` & `make install`
 sequence.  Excitingly it uses my own `joust` test harness, so you'll
 need to build and install that somewhere, if you want the comfort of
-testing.  Or you can add a `joust` symlink from the libcody source
-directory to joust's source and the right things will happen.
+testing.
 
 The following configure options are available, in addition to the usual set:
 
 * `--enable-checking` Compile with assert-like checking.  Defaults to on.
 
-* `--with-tools=DIR` Prepend `DIR/bin` to `PATH` when building (`DIR`
-  can already include the trailing `/bin`, and the right things
+* `--with-tooldir=DIR` Prepend `DIR` to `PATH` when building (`DIR`
+  need not already include the trailing `/bin`, and the right things
   happen).  Use this if you need to point to non-standard tools that
   you usually don't have in your path.  This path is also used when
   the configure script searches for programs.
+
+* `--with-toolinc=DIR`, `--with-toollib=DIR`, include path and library
+  path variants of `--with-tooldir`.  If these are siblings of the
+  tool bin directory, they'll be found automatically.
 
 * `--with-compiler=NAME` Specify a particular compiler to use.
   Usually what configure finds is sufficiently usable.
@@ -319,17 +322,53 @@ channel.  The channel may be provided by:
 
 The communication channel is presumed reliable.
 
-### `Client`
-
-### `Server`
-
-### `Resolver`
-
-### `Packet`
-
-## Helpers
+Refer to the (currently very sparse) doxygen-generated documentation
+for details of the API.
 
 ## Examples
+
+To create an in-process resolver, use the following boilerplate:
+
+```
+class MyResolver : Cody::Resolver { ... stuff here ... };
+
+Cody::Client *MakeClient (char const *maybe_ident)
+{
+  auto *r = new MyResolver (...);
+  auto *s = new Cody::Server (r);
+  auto *c = new Cody::Client (s);
+
+  auto t = c->ConnectRequest ("ME", maybe_ident);
+  if (t.GetCode () == Cody::Client::TC_CONNECT)
+    ;// Yay!
+  else if (t.GetCode () == Cody::Client::TC_ERROR)
+    report_error (t.GetString ());
+
+  return c;
+}
+
+```
+
+For a remotely connecting client:
+```
+Cody::Client *MakeClient ()
+{
+  char const *err = nullptr;
+  int fd = OpenInet6 (char const **err, name, port);
+  if (fd < 0)
+    { ... error... return nullptr;}
+
+  auto *c = new Cody::Client (fd);
+
+  auto t = c->ConnectRequest ("ME", maybe_ident);
+  if (t.GetCode () == Cody::Client::TC_CONNECT)
+    ;// Yay!
+  else if (t.GetCode () == Cody::Client::TC_ERROR)
+    report_error (t.GetString ());
+
+  return c;
+}
+```
 
 # Future Directions
 
