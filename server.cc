@@ -80,6 +80,7 @@ void Server::DirectProcess (Detail::MessageBuffer &from,
   read.PrepareToRead ();
   std::swap (read, from);
   ProcessRequests ();
+  resolver->WaitUntilReady (this);
   write.PrepareToWrite ();
   std::swap (to, write);
 }

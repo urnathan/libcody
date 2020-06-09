@@ -112,6 +112,10 @@ std::string Resolver::GetCMIName (std::string const &module)
   return result;
 }
 
+void Resolver::WaitUntilReady (Server *)
+{
+}
+
 Resolver *Resolver::ConnectRequest (Server *s, unsigned version,
 			       std::string &, std::string &)
 {

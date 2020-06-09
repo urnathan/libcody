@@ -508,6 +508,13 @@ protected:
   virtual char const *GetCMISuffix ();
 
 public:
+  /// When the requests of a directly-connected server are processed,
+  /// we may want to wait for the requests to complete (for instance a
+  /// set of subjobs).
+  /// @param s directly connected server.
+  virtual void WaitUntilReady (Server *s);
+
+public:
   /// Provide an error response.
   /// @param s the server to provide the response to.
   /// @param msg the error message
