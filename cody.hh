@@ -97,6 +97,7 @@ public:
   }
   /// Add a word as with AppendWord
   /// @param str the string to append
+  /// @param maybe_quote string might need quoting, as for Append
   void AppendWord (std::string const &str, bool maybe_quote = false)
   {
     AppendWord (str.data (), maybe_quote, str.size ());
@@ -419,6 +420,7 @@ public:
   /// Inform of compilation of a named module interface or partition,
   /// or a header unit
   /// @param str module or header-unit
+  /// @param len name length, if known
   /// @result CMI name (or deferrment/error)
   Packet ModuleExport (char const *str, size_t len = ~size_t (0));
   Packet ModuleExport (std::string const &s)
@@ -428,6 +430,7 @@ public:
 
   /// Importation of a module, partition or header-unit
   /// @param str module or header-unit
+  /// @param len name length, if known
   /// @result CMI name (or deferrment/error)
   Packet ModuleImport (char const *str, size_t len = ~size_t (0));
   Packet ModuleImport (std::string const &s)
@@ -439,6 +442,7 @@ public:
   /// header-unit.  Must have been preceeded by a ModuleExport
   /// request.
   /// @param str module or header-unit
+  /// @param len name length, if known
   /// @result  OK (or deferment/error)
   Packet ModuleCompiled (char const *str, size_t len = ~size_t (0));
   Packet ModuleCompiled (std::string const &s)
@@ -448,6 +452,7 @@ public:
 
   /// Include translation query.
   /// @param str header unit name
+  /// @param len name length, if known
   /// @result  Packet indicating include translation boolean, or CMI
   /// name (or deferment/error)
   Packet IncludeTranslate (char const *str, size_t len = ~size_t (0));
@@ -462,8 +467,8 @@ public:
   void Cork ();
 
   /// Uncork the connection.  All queued requests are sent to the
-  /// server, and a block of responses waited for.   A vector of
-  /// packets is returned, containing the in-order responses to the
+  /// server, and a block of responses waited for.
+  /// @result A vector of packets, containing the in-order responses to the
   /// queued requests.
   std::vector<Packet> Uncork ();
   ///
@@ -480,6 +485,12 @@ private:
   int CommunicateWithServer ();
 };
 
+/// This server-side class is used to resolve requests from one or
+/// more clients.  You are expected to derive from it and override the
+/// virtual functions it provides.  The connection resolver may return
+/// a different resolved object to service the remainder of the
+/// connection -- for instance depending on the compiler that is
+/// making the requests.
 class Resolver 
 {
 public:
@@ -487,22 +498,50 @@ public:
   virtual ~Resolver ();
 
 protected:
-  // Default conversion of a module name to a cmi file.
+  /// Mapping from a module or header-unit name to a CMI file name.
+  /// @param module module name
+  /// @result CMI name
   virtual std::string GetCMIName (std::string const &module);
+
+  /// Return the CMI file suffix to use
+  /// @result CMI suffix, a statically allocated string
   virtual char const *GetCMISuffix ();
 
 public:
-  virtual void ErrorResponse (Server *, std::string &&msg);
-  virtual Resolver *ConnectRequest (Server *, unsigned version,
+  /// Provide an error response.
+  /// @param s the server to provide the response to.
+  /// @param msg the error message
+  virtual void ErrorResponse (Server *s, std::string &&msg);
+
+public:
+  /// Connection handshake.  Provide response to server and return new
+  /// (or current) resolver, or nullptr.
+  /// @param s server to provide response to
+  /// @param version the client's version number
+  /// @param agent the client agent (compiler identification)
+  /// @param ident the compilation identification (may be empty)
+  /// @result nullptr in the case of an error.  An error response will
+  /// be sent.  If handing off to another resolver, return that,
+  /// otherwise this
+  virtual Resolver *ConnectRequest (Server *s, unsigned version,
 				    std::string &agent, std::string &ident);
+
+public:
   // return 0 on ok, ERRNO on failure, -1 on unspecific error
-  virtual int ModuleRepoRequest (Server *);
-  virtual int ModuleExportRequest (Server *, std::string &module);
-  virtual int ModuleImportRequest (Server *, std::string &module);
-  virtual int ModuleCompiledRequest (Server *, std::string &module);
-  virtual int IncludeTranslateRequest (Server *, std::string &include);
+  virtual int ModuleRepoRequest (Server *s);
+  virtual int ModuleExportRequest (Server *s, std::string &module);
+  virtual int ModuleImportRequest (Server *s, std::string &module);
+  virtual int ModuleCompiledRequest (Server *s, std::string &module);
+  virtual int IncludeTranslateRequest (Server *s, std::string &include);
 };
 
+
+/// This server-side (build system) class handles a single connection
+/// to a client.  It has 3 states, READING:accumulating a message
+/// block froma client, WRITING:writing a message block to a client
+/// and PROCESSING:resolving requests.  If the server does not spawn
+/// jobs to build needed artifacts, the PROCESSING state will never be
+/// transitory.
 class Server
 {
 public:
@@ -553,50 +592,94 @@ public:
   }
 
 public:
+  /// Process requests from a directly-connected client.  This is a
+  /// small wrapper around ProcessRequests, with some buffer swapping
+  /// for communication.  It is expected that such processessing is
+  /// immediate.
+  /// @param from message block from client
+  /// @param to message block to client
   void DirectProcess (Detail::MessageBuffer &from, Detail::MessageBuffer &to);
+
+public:
+  /// Process the messages queued in the read buffer.  We enter the
+  /// PROCESSING state, and each message line causes various resolver
+  /// methods to be called.  Once processed, the server may need to
+  /// wait for all the requests to be ready, or it may be able to
+  /// immediately write responses back.
   void ProcessRequests ();
 
 public:
+  /// Accumulate an error response.
+  /// @param error the error message to encode
+  /// @param elen length of error, if known
   void ErrorResponse (char const *error, size_t elen = ~size_t (0));
   void ErrorResponse (std::string const &error)
   {
     ErrorResponse (error.data (), error.size ());
   }
   // FIXME: some kind of printf/ostream error variant?
+  ///
+  /// Accumulate an OK response
   void OKResponse ();
 
 public:
+  /// Accumulate a (successful) connection response
+  /// @param agent the server-side agent
+  /// @param alen agent length, if known
   void ConnectResponse (char const *agent, size_t alen = ~size_t (0));
   void ConnectResponse (std::string const &agent)
   {
     ConnectResponse (agent.data (), agent.size ());
   }
+
+public:
+  /// Accumulate a module repository response
+  /// @param repo repository name (may be nullptr, or empty)
+  /// @param rlen repo length, if known
   void ModuleRepoResponse (char const *repo, size_t rlen = ~size_t (0));
   void ModuleRepoResponse (std::string const &repo)
   {
     ModuleRepoResponse (repo.data (), repo.size ());
   }
+
+  /// Accumulate a module CMI response
+  /// @param cmi CMI filename
+  /// @param clen filename length, if known
   void ModuleCMIResponse (char const *cmi, size_t clen = ~size_t (0));
   void ModuleCMIResponse (std::string const &cmi)
   {
     ModuleCMIResponse (cmi.data (), cmi.size ());
   }
+
+  /// Accumulate an include translate response
+  /// @param xlate boolean indicating if translation should occur
   void IncludeTranslateResponse (bool xlate);
 
 public:
+  /// Write message block to client.  Semantics as for
+  /// MessageBuffer::Write.
+  /// @result errno or completion (0).
   int Write ()
   {
     return write.Write (fd.to);
   }
+  /// Initialize for writing a message block.  All responses to the
+  /// incomping message block must be complete  Enters WRITING state.
   void PrepareToWrite ()
   {
     write.PrepareToWrite ();
     direction = WRITING;
   }
+
+public:
+  /// Read message block from client.  Semantics as for
+  /// MessageBuffer::Read.
+  /// @result errno, eof (-1) or completion (0)
   int Read ()
   {
     return read.Read (fd.from);
   }
+  /// Initialize for reading a message block.  Enters READING state.
   void PrepareToRead ()
   {
     write.PrepareToRead ();
