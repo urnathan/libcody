@@ -1,6 +1,6 @@
 # CODYlib		-*- mode:autoconf -*-
 # Copyright (C) 2019-2020 Nathan Sidwell, nathan@acm.org
-# License: LGPL v3.0 or later
+# License: Apache v2.0
 
 AC_DEFUN([CODY_TOOL_BIN],
 [AC_MSG_CHECKING([tool binaries])

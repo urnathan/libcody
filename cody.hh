@@ -1,6 +1,6 @@
 // CODYlib		-*- mode:c++ -*-
 // Copyright (C) 2020 Nathan Sidwell, nathan@acm.org
-// License: LGPL v3.0 or later
+// License: Apache v2.0
 
 #ifndef CODY_HH
 #define CODY_HH 1

@@ -1,6 +1,6 @@
 # CODYlib  -*- mode:autoconf -*-
 # Copyright (C) 2020 Nathan Sidwell, nathan@acm.org
-# License: LGPL v3.0 or later
+# License: Apache v2.0
 
 AC_INIT([codylib],[0.0],[github.com/urnathan/libcody])
 AC_CONFIG_SRCDIR(README.md)
