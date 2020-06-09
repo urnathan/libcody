@@ -19,7 +19,7 @@ using namespace Cody;
 
 int main (int, char *[])
 {
-  MessageBuffer writer;
+  Detail::MessageBuffer writer;
 
   writer.BeginLine ();
   writer.AppendWord ("bob");

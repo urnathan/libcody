@@ -19,7 +19,8 @@ static Packet ModuleCompiledResponse (std::vector<std::string> &words);
 static Packet IncludeTranslateResponse (std::vector<std::string> &words);
 
 // Must be consistently ordered with the RequestCode enum
-static Packet (*const responseTable[RC_HWM]) (std::vector<std::string> &) =
+static Packet (*const responseTable[Detail::RC_HWM])
+  (std::vector<std::string> &) =
   {
     &ConnectResponse,
     &ModuleRepoResponse,
@@ -126,7 +127,7 @@ Packet Client::ProcessResponse (std::vector<std::string> &words,
   if (isLast && !read.IsAtEnd ())
     return Packet (Client::PC_ERROR, std::string ("unexpected extra response"));
 
-  Assert (code < RC_HWM);
+  Assert (code < Detail::RC_HWM);
   Packet result (responseTable[code] (words));
   if (result.GetCode () == Client::PC_ERROR && result.GetString ().empty ())
     {
@@ -202,7 +203,7 @@ Packet Client::Connect (char const *agent, char const *ident,
   write.AppendWord (ident, true, ilen);
   write.EndLine ();
 
-  return MaybeRequest (RC_CONNECT);
+  return MaybeRequest (Detail::RC_CONNECT);
 }
 
 // HELLO VERSION AGENT
@@ -228,7 +229,7 @@ Packet Client::ModuleRepo ()
   write.AppendWord ("MODULE-REPO");
   write.EndLine ();
 
-  return MaybeRequest (RC_MODULE_REPO);
+  return MaybeRequest (Detail::RC_MODULE_REPO);
 }
 
 // MODULE-REPO $dir
@@ -250,7 +251,7 @@ Packet Client::ModuleExport (char const *module, size_t mlen)
   write.AppendWord (module, true, mlen);
   write.EndLine ();
 
-  return MaybeRequest (RC_MODULE_EXPORT);
+  return MaybeRequest (Detail::RC_MODULE_EXPORT);
 }
 
 // MODULE-IMPORT $modulename
@@ -261,7 +262,7 @@ Packet Client::ModuleImport (char const *module, size_t mlen)
   write.AppendWord (module, true, mlen);
   write.EndLine ();
 
-  return MaybeRequest (RC_MODULE_IMPORT);
+  return MaybeRequest (Detail::RC_MODULE_IMPORT);
 }
 
 // MODULE-CMI $cmifile
@@ -281,7 +282,7 @@ Packet Client::ModuleCompiled (char const *module, size_t mlen)
   write.AppendWord (module, true, mlen);
   write.EndLine ();
 
-  return MaybeRequest (RC_MODULE_COMPILED);
+  return MaybeRequest (Detail::RC_MODULE_COMPILED);
 }
 
 // OK
@@ -300,7 +301,7 @@ Packet Client::IncludeTranslate (char const *include, size_t ilen)
   write.AppendWord (include, true, ilen);
   write.EndLine ();
 
-  return MaybeRequest (RC_INCLUDE_TRANSLATE);
+  return MaybeRequest (Detail::RC_INCLUDE_TRANSLATE);
 }
 
 // INCLUDE-TEXT

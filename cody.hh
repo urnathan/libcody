@@ -24,10 +24,162 @@ namespace Cody {
 // messages sufficiently to error out
 constexpr unsigned Version = 1;
 
+namespace Detail  {
+
+/// Internal buffering class.  Used to concatenate outgoing messages
+/// and Lex incoming ones.
+class MessageBuffer
+{
+  std::vector<char> buffer;
+  size_t lastBol = 0;
+
+public:
+  MessageBuffer () = default;
+  ~MessageBuffer () = default;
+  MessageBuffer (MessageBuffer &&) = default;
+  MessageBuffer &operator= (MessageBuffer &&) = default;
+
+public:
+  ///
+  /// Finalize a buffer to be written.  No more lines can be added to
+  /// the buffer
+  void PrepareToWrite ()
+  {
+    buffer.push_back ('\n');
+    lastBol = 0;
+  }
+  ///
+  /// Prepare a buffer for reading.
+  void PrepareToRead ()
+  {
+    buffer.clear ();
+    lastBol = 0;
+  }
+
+public:
+  /// Begin a message line
+  void BeginLine ();
+  /// End a message line
+  void EndLine () {}
+
+public:
+  /// Append a string to the current line.  No whitespace is prepended
+  /// or appended.
+  ///
+  /// @param str the string to be written
+  /// @param maybe_quote indicate if there's a possibility the string
+  /// contains characters that need quoting.  Defaults to false.
+  /// It is always safe to set
+  /// this true, but that causes an additional scan of the string.
+  /// @param len The length of the string.  If not specified, strlen
+  /// is used to find the length.
+  void Append (char const *str, bool maybe_quote = false,
+	       size_t len = ~size_t (0));
+
+  /// Add whitespace word separator
+  void Space ()
+  {
+    Append (' ');
+  }
+  /// Add a word as with Append, but prefixing whitespace to make a
+  /// separate word
+  void AppendWord (char const *str, bool maybe_quote = false,
+		   size_t len = ~size_t (0))
+  {
+    if (buffer.size () != lastBol)
+      Space ();
+    Append (str, maybe_quote, len);
+  }
+  /// Add a word as with AppendWord
+  /// @param str the string to append
+  void AppendWord (std::string const &str, bool maybe_quote = false)
+  {
+    AppendWord (str.data (), maybe_quote, str.size ());
+  }
+  ///
+  /// Add an integral value, prepending a space.
+  void AppendInteger (unsigned u);
+
+private:
+  void Append (char c);
+
+public:
+  // Reading from a bufer
+  // ERRNO on error (including at end), 0 on ok
+
+  /// Lex the next input line.
+  /// @param words filled with a vector of lexed strings
+  /// @result 0 if no errors, an errno value on lexxing error such as
+  /// there being no next line (ENOMSG), or malformed quoting (EINVAL)
+  int Lex (std::vector<std::string> &words);
+
+  // string_view is a C++17 thing, so this is awkward
+  /// Provide the most-recently lexxed line.
+  void LexedLine (std::string &);
+  ///
+  /// Detect if we have reached the end of the input buffer.
+  /// I.e. there are no more lines to Lex
+  /// @return True if at end
+  bool IsAtEnd () const
+  {
+    return lastBol == buffer.size ();
+  }
+
+public:
+  // Read from fd.  Return ERR on error, EAGAIN on incompete, 0 on
+  // completion
+
+  /// Read from end point into a read buffer, as with read(2).  This will
+  /// not block , unless FD is blocking, and there is nothing
+  /// immediately available.
+  /// @param fd file descriptor to read from.  This may be a regular
+  /// file, pipe or socket.
+  /// @result on error returns errno.  If end of file occurs, returns
+  /// -1.  At end of message returns 0.  If there is more needed
+  /// returns EAGAIN (or possibly EINTR).  If the message is
+  /// malformed, returns EINVAL.
+  int Read (int fd) noexcept;
+
+public:
+  /// Write to an end point from a write buffer, as with write(2).  As
+  /// with Read, this will not usually block.
+  /// @param fd file descriptor to write to.  This may be a regular
+  /// file, pipe or socket.
+  /// @result on error returns errno.
+  /// At end of message returns 0.  If there is more to write
+  /// returns EAGAIN (or possibly EINTR).
+  int Write (int fd) noexcept;
+};
+
+///
+/// Internal Request codes
+enum RequestCode
+{
+  RC_CONNECT,
+  RC_MODULE_REPO,
+  RC_MODULE_EXPORT,
+  RC_MODULE_IMPORT,
+  RC_MODULE_COMPILED,
+  RC_INCLUDE_TRANSLATE,
+  RC_HWM
+};
+
+struct FD
+{
+  int from;
+  int to;
+};
+
+}
+
+///
+/// Response data for a request.  Returned by Client's request calls. 
+///
 class Packet
 {
 public:
   enum Category { INTEGER, STRING, VECTOR};
+
 private:
   // std:variant is a C++17 thing
   union
@@ -83,18 +235,29 @@ private:
   void Destroy ();
 
 public:
+  ///
+  /// Return the packet type
   unsigned GetCode () const
   {
     return code;
   }
+  ///
+  /// Return the category of the packet's payload
   Category GetCategory () const
   {
     return cat;
   }
+
+public:
+  ///
+  /// Return an integral payload.  Undefined if the category is not INTEGER
   size_t GetInteger () const
   {
     return integer;
   }
+  ///
+  /// Return (a reference to) a string payload.  Undefined if the
+  /// category is not STRING
   std::string const &GetString () const
   {
     return string;
@@ -103,6 +266,9 @@ public:
   {
     return string;
   }
+  ///
+  /// Return (a reference to) a vector of strings payload.  Undefined
+  /// if the category is not VECTOR
   std::vector<std::string> const &GetVector () const
   {
     return vector;
@@ -111,90 +277,6 @@ public:
   {
     return vector;
   }
-};
-
-class MessageBuffer
-{
-  std::vector<char> buffer;
-  size_t lastBol = 0;
-
-public:
-  MessageBuffer () = default;
-  ~MessageBuffer () = default;
-  MessageBuffer (MessageBuffer &&) = default;
-  MessageBuffer &operator= (MessageBuffer &&) = default;
-
-public:
-  void PrepareToWrite ()
-  {
-    buffer.push_back ('\n');
-    lastBol = 0;
-  }
-  void PrepareToRead ()
-  {
-    buffer.clear ();
-    lastBol = 0;
-  }
-
-public:
-  void BeginLine ();
-  void EndLine () {}
-
-  void Append (char const *str, bool maybe_quote = false,
-	       size_t len = ~size_t (0));
-  void Space ()
-  {
-    Append (' ');
-  }
-  void AppendWord (char const *str, bool maybe_quote = false,
-		   size_t len = ~size_t (0))
-  {
-    if (buffer.size () != lastBol)
-      Space ();
-    Append (str, maybe_quote, len);
-  }
-  void AppendWord (std::string const &str, bool maybe_quote = false)
-  {
-    AppendWord (str.data (), maybe_quote, str.size ());
-  }
-  void AppendInteger (unsigned u);
-
-private:
-  void Append (char c);
-
-public:
-  // Reading from a bufer
-  // ERRNO on error (including at end), 0 on ok
-  int Lex (std::vector<std::string> &);
-  // string_view is a C++17 thing, so this is awkward
-  void LexedLine (std::string &);
-  bool IsAtEnd () const
-  {
-    return lastBol == buffer.size ();
-  }
-
-public:
-  // Read from fd.  Return ERR on error, EAGAIN on incompete, 0 on completion
-  int Read (int fd) noexcept;
-  // Write to FD.  Return ERR on error, EAGAIN on incompete, 0 on completion
-  int Write (int fd) noexcept;
-};
-
-enum RequestCode
-{
-  RC_CONNECT,
-  RC_MODULE_REPO,
-  RC_MODULE_EXPORT,
-  RC_MODULE_IMPORT,
-  RC_MODULE_COMPILED,
-  RC_INCLUDE_TRANSLATE,
-  RC_HWM
-};
-
-struct FD
-{
-  int from;
-  int to;
 };
 
 class Server;
@@ -215,12 +297,12 @@ public:
   };
 
 private:
-  MessageBuffer write;
-  MessageBuffer read;
+  Detail::MessageBuffer write;
+  Detail::MessageBuffer read;
   std::string corked; // Queued request tags
   union
   {
-    FD fd;
+    Detail::FD fd;
     Server *server;
   };
   bool is_direct = false;
@@ -350,10 +432,10 @@ public:
   enum Direction {READING, WRITING, PROCESSING};
 
 private:
-  MessageBuffer write;
-  MessageBuffer read;
+  Detail::MessageBuffer write;
+  Detail::MessageBuffer read;
   Resolver *resolver;
-  FD fd;
+  Detail::FD fd;
   bool is_connected = false;
   Direction direction : 2;
 
@@ -394,7 +476,7 @@ public:
   }
 
 public:
-  void DirectProcess (MessageBuffer &from, MessageBuffer &to);
+  void DirectProcess (Detail::MessageBuffer &from, Detail::MessageBuffer &to);
   void ProcessRequests ();
 
 public:

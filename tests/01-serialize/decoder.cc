@@ -49,7 +49,7 @@ using namespace Cody;
 
 int main (int, char *[])
 {
-  MessageBuffer reader;
+  Detail::MessageBuffer reader;
 
   reader.PrepareToRead ();
   while (int e = reader.Read (0))

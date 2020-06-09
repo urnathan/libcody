@@ -27,7 +27,7 @@
 // Escapes are \\, \', \n, \t, \_, everything else as \<hex><hex>?
 // Spaces separate words, UTF8 encoding for non-ascii chars
 
-namespace Cody {
+namespace Cody::Detail {
 
 static const char CONTINUE = ';';
 

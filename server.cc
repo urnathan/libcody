@@ -30,7 +30,7 @@ static int IncludeTranslateRequest (Server *, Resolver *,
 
 static std::tuple<char const *,
 		  int (*) (Server *, Resolver *, std::vector<std::string> &)>
-  const requestTable[RC_HWM] =
+  const requestTable[Detail::RC_HWM] =
   {
     // Same order as enum RequestCode
     {"HELLO", nullptr},
@@ -74,7 +74,8 @@ Server &Server::operator= (Server &&src)
   return *this;
 }
 
-void Server::DirectProcess (MessageBuffer &from, MessageBuffer &to)
+void Server::DirectProcess (Detail::MessageBuffer &from,
+			    Detail::MessageBuffer &to)
 {
   read.PrepareToRead ();
   std::swap (read, from);
@@ -91,7 +92,7 @@ void Server::ProcessRequests (void)
   while (!read.IsAtEnd ())
     {
       int err = 0;
-      unsigned ix = RC_HWM;
+      unsigned ix = Detail::RC_HWM;
       if (!read.Lex (words))
 	{
 	  Assert (!words.empty ());
@@ -100,7 +101,7 @@ void Server::ProcessRequests (void)
 	      if (words[0] != std::get<0> (requestTable[ix]))
 		continue; // not this one
 
-	      if (ix == RC_CONNECT)
+	      if (ix == Detail::RC_CONNECT)
 		{
 		  // CONNECT
 		  if (IsConnected ())
@@ -122,18 +123,18 @@ void Server::ProcessRequests (void)
 	    }
 	}
 
-      if (err || ix >= RC_HWM)
+      if (err || ix >= Detail::RC_HWM)
 	{
 	  // Some kind of error
 	  std::string msg;
 
 	  if (err > 0)
 	    msg = "error processing '";
-	  else if (ix >= RC_HWM)
+	  else if (ix >= Detail::RC_HWM)
 	    msg = "unrecognized '";
-	  else if (IsConnected () && ix == RC_CONNECT)
+	  else if (IsConnected () && ix == Detail::RC_CONNECT)
 	    msg = "already connected '";
-	  else if (!IsConnected () && ix != RC_CONNECT)
+	  else if (!IsConnected () && ix != Detail::RC_CONNECT)
 	    msg = "not connected '";
 	  else
 	    msg = "malformed '";
