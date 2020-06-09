@@ -30,8 +30,9 @@ namespace Detail  {
 /// and Lex incoming ones.
 class MessageBuffer
 {
-  std::vector<char> buffer;
-  size_t lastBol = 0;
+  std::vector<char> buffer;  ///< buffer holding the message
+  size_t lastBol = 0;  ///< location of the most recent Beginning Of
+		       ///< Line, or position we've readed when writing
 
 public:
   MessageBuffer () = default;
@@ -42,14 +43,14 @@ public:
 public:
   ///
   /// Finalize a buffer to be written.  No more lines can be added to
-  /// the buffer
+  /// the buffer.  Use before a sequence of Write calls.
   void PrepareToWrite ()
   {
     buffer.push_back ('\n');
     lastBol = 0;
   }
   ///
-  /// Prepare a buffer for reading.
+  /// Prepare a buffer for reading.  Use before a sequence of Read calls.
   void PrepareToRead ()
   {
     buffer.clear ();
@@ -57,9 +58,10 @@ public:
   }
 
 public:
-  /// Begin a message line
+  /// Begin a message line.  Use before a sequence of Append and
+  /// related calls.
   void BeginLine ();
-  /// End a message line
+  /// End a message line.  Use after a sequence of Append and related calls.
   void EndLine () {}
 
 public:
@@ -76,11 +78,14 @@ public:
   void Append (char const *str, bool maybe_quote = false,
 	       size_t len = ~size_t (0));
 
-  /// Add whitespace word separator
+  ///
+  /// Add whitespace word separator.  Multiple adjacent whitespace is fine.
   void Space ()
   {
     Append (' ');
   }
+
+public:
   /// Add a word as with Append, but prefixing whitespace to make a
   /// separate word
   void AppendWord (char const *str, bool maybe_quote = false,
@@ -101,34 +106,36 @@ public:
   void AppendInteger (unsigned u);
 
 private:
+  /// Append a literal character.
+  /// @param c character to append
   void Append (char c);
 
 public:
-  // Reading from a bufer
-  // ERRNO on error (including at end), 0 on ok
-
-  /// Lex the next input line.
+  /// Lex the next input line into a vector of words.
   /// @param words filled with a vector of lexed strings
   /// @result 0 if no errors, an errno value on lexxing error such as
   /// there being no next line (ENOMSG), or malformed quoting (EINVAL)
   int Lex (std::vector<std::string> &words);
 
-  // string_view is a C++17 thing, so this is awkward
-  /// Provide the most-recently lexxed line.
-  void LexedLine (std::string &);
-  ///
+public:
+  /// Append the most-recently lexxed line to a string.  May be useful
+  /// in error messages.  The unparsed line is appended -- before any
+  /// unquoting.
+  /// If we had c++17 string_view, we'd simply return a view of the
+  /// line, and leave it to the caller to do any concatenation.
+  /// @param l string to-which the lexxed line is appended.
+  void LexedLine (std::string &l);
+
+public:
   /// Detect if we have reached the end of the input buffer.
   /// I.e. there are no more lines to Lex
-  /// @return True if at end
+  /// @result True if at end
   bool IsAtEnd () const
   {
     return lastBol == buffer.size ();
   }
 
 public:
-  // Read from fd.  Return ERR on error, EAGAIN on incompete, 0 on
-  // completion
-
   /// Read from end point into a read buffer, as with read(2).  This will
   /// not block , unless FD is blocking, and there is nothing
   /// immediately available.
@@ -152,7 +159,8 @@ public:
 };
 
 ///
-/// Internal Request codes
+/// Request codes.  Perhaps this should be exposed?  These are likely
+/// useful to servers that queue requests.
 enum RequestCode
 {
   RC_CONNECT,
@@ -164,34 +172,38 @@ enum RequestCode
   RC_HWM
 };
 
+/// Internal file descriptor tuple.  It's used as an anonymous union member.
 struct FD
 {
-  int from;
-  int to;
+  int from;	///< Read from this FD
+  int to;	///< Write to this FD
 };
 
 }
 
 ///
-/// Response data for a request.  Returned by Client's request calls. 
-///
+/// Response data for a request.  Returned by Client's request calls,
+/// which return a single Packet.  When the connection is Corked, the
+/// Uncork call will return a vector of Packets.
 class Packet
 {
 public:
+  ///
+  /// Packet is a variant structure.  These are the possible content types.
   enum Category { INTEGER, STRING, VECTOR};
 
 private:
-  // std:variant is a C++17 thing
+  // std:variant is a C++17 thing, so we're doing this ourselves.
   union
   {
-    size_t integer;
-    std::string string;
-    std::vector<std::string> vector;
+    size_t integer;	///< Integral value
+    std::string string; ///< String value
+    std::vector<std::string> vector;  ///< Vector of string value
   };
-  Category cat : 2;
+  Category cat : 2;  ///< Discriminatory
 
 private:
-  unsigned code = 0;
+  unsigned code = 0;  ///< Packet type
 
 public:
   Packet (unsigned c, size_t i = 0)
@@ -231,7 +243,11 @@ public:
   }
 
 private:
+  ///
+  /// Variant move creation from another packet
   void Create (Packet &&t);
+  ///
+  /// Variant destruction
   void Destroy ();
 
 public:
@@ -267,12 +283,15 @@ public:
     return string;
   }
   ///
-  /// Return (a reference to) a vector of strings payload.  Undefined
-  /// if the category is not VECTOR
+  /// Return (a reference to) a constant vector of strings payload.
+  /// Undefined if the category is not VECTOR
   std::vector<std::string> const &GetVector () const
   {
     return vector;
   }
+  ///
+  /// Return (a reference to) a non-conatant vector of strings payload.
+  /// Undefined if the category is not VECTOR
   std::vector<std::string> &GetVector ()
   {
     return vector;
@@ -281,42 +300,49 @@ public:
 
 class Server;
 
+///
+/// Client-side (compiler) object.
 class Client 
 {
 public:
-  // Packet codes
+  /// Response packet codes
   enum PacketCode
   {
-    PC_CORKED,		// messages are corked
-    PC_CONNECT,		// connection, packet is ?
-    PC_ERROR,		// packet is error string
-    PC_MODULE_REPO,	// packet, if non-empty, is repo string
-    PC_MODULE_CMI,	// packet is string CMI file
-    PC_MODULE_COMPILED, // module compilation ack
-    PC_INCLUDE_TRANSLATE, // packet is boolean, true for module
+    PC_CORKED,		///< Messages are corked
+    PC_CONNECT,		///< Packet is integer version
+    PC_ERROR,		///< Packet is error string
+    PC_MODULE_REPO,	///< Packet, if non-empty, is repo string
+    PC_MODULE_CMI,	///< Packet is string CMI file
+    PC_MODULE_COMPILED, ///< Module compilation ack
+    PC_INCLUDE_TRANSLATE, ///< Packet is boolean, true for module
   };
 
 private:
-  Detail::MessageBuffer write;
-  Detail::MessageBuffer read;
-  std::string corked; // Queued request tags
+  Detail::MessageBuffer write; ///< Outgoing write buffer
+  Detail::MessageBuffer read;  ///< Incoming read buffer
+  std::string corked; ///< Queued request tags
   union
   {
-    Detail::FD fd;
-    Server *server;
+    Detail::FD fd;   ///< FDs connecting to server
+    Server *server;  ///< Directly connected server
   };
-  bool is_direct = false;
-  bool is_connected = false;
+  bool is_direct = false;  ///< Discriminator
+  bool is_connected = false;  /// Connection handshake succesful
 
 private:
   Client ();
 public:
+  /// Direct connection constructor.
+  /// @param s Server to directly connect
   Client (Server *s)
     : Client ()
   {
     is_direct = true;
     server = s;
   }
+  /// Communication connection constructor
+  /// @param from file descriptor to read from
+  /// @param to file descriptor to write to, defaults to from
   Client (int from, int to = -1)
     : Client ()
   {
@@ -329,32 +355,56 @@ public:
   Client &operator= (Client &&);
 
 public:
+  ///
+  /// Direct connection predicate
   bool IsDirect () const
   {
     return is_direct;
   }
+  ///
+  /// Successful handshake predicate
   bool IsConnected () const
   {
     return is_connected;
   }
 
 public:
+  ///
+  /// Get the read FD
+  /// @result the FD to read from, -1 if a direct connection
   int GetFDRead () const
   {
     return is_direct ? -1 : fd.from;
   }
+  ///
+  /// Get the write FD
+  /// @result the FD to write to, -1 if a direct connection
   int GetFDWrite () const
   {
     return is_direct ? -1 : fd.to;
   }
+  ///
+  /// Get the directly-connected server
+  /// @result the server, or nullptr if a communication connection
   Server *GetServer () const
   {
     return is_direct ? server : nullptr;
   }
 
 public:
+  ///
+  /// Perform connection handshake.  All othe requests will result in
+  /// errors, until handshake is succesful.
+  /// @param agent compiler identification
+  /// @param ident compilation identifiation (maybe nullptr)
+  /// @param alen length of agent string, if known
+  /// @param ilen length of ident string, if known
+  /// @result packet indicating success (or deferrment) of the connection.
   Packet Connect (char const *agent, char const *ident,
 		 size_t alen = ~size_t (0), size_t ilen = ~size_t (0));
+  /// std::string wrapper for connection
+  /// @param agent compiler identification
+  /// @param ident compilation identification
   Packet Connect (std::string const &agent, std::string const &ident)
   {
     return Connect (agent.c_str (), ident.c_str (),
@@ -362,26 +412,44 @@ public:
   }
 
 public:
+  /// Request compiler module repository
+  /// @result packet indicating repo
   Packet ModuleRepo ();
-		 
+
+  /// Inform of compilation of a named module interface or partition,
+  /// or a header unit
+  /// @param str module or header-unit
+  /// @result CMI name (or deferrment/error)
   Packet ModuleExport (char const *str, size_t len = ~size_t (0));
   Packet ModuleExport (std::string const &s)
   {
     return ModuleExport (s.c_str (), s.size ());
   }
-		 
+
+  /// Importation of a module, partition or header-unit
+  /// @param str module or header-unit
+  /// @result CMI name (or deferrment/error)
   Packet ModuleImport (char const *str, size_t len = ~size_t (0));
   Packet ModuleImport (std::string const &s)
   {
     return ModuleImport (s.c_str (), s.size ());
   }
 
+  /// Successful compilation of a module interface, partition or
+  /// header-unit.  Must have been preceeded by a ModuleExport
+  /// request.
+  /// @param str module or header-unit
+  /// @result  OK (or deferment/error)
   Packet ModuleCompiled (char const *str, size_t len = ~size_t (0));
   Packet ModuleCompiled (std::string const &s)
   {
     return ModuleCompiled (s.c_str (), s.size ());
   }
 
+  /// Include translation query.
+  /// @param str header unit name
+  /// @result  Packet indicating include translation boolean, or CMI
+  /// name (or deferment/error)
   Packet IncludeTranslate (char const *str, size_t len = ~size_t (0));
   Packet IncludeTranslate (std::string const &s)
   {
@@ -389,8 +457,17 @@ public:
   }
 
 public:
+  /// Cork the connection.  All requests are queued up.  Each request
+  /// call will return a PC_CORKED packet.
   void Cork ();
+
+  /// Uncork the connection.  All queued requests are sent to the
+  /// server, and a block of responses waited for.   A vector of
+  /// packets is returned, containing the in-order responses to the
+  /// queued requests.
   std::vector<Packet> Uncork ();
+  ///
+  /// Indicate corkedness of connection
   bool IsCorked () const
   {
     return !corked.empty ();
