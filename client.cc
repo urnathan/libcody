@@ -5,6 +5,7 @@
 // Cody
 #include "internal.hh"
 // C
+#include <cerrno>
 #include <cstring>
 
 // Client code
