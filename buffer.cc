@@ -27,7 +27,8 @@
 // Escapes are \\, \', \n, \t, \_, everything else as \<hex><hex>?
 // Spaces separate words, UTF8 encoding for non-ascii chars
 
-namespace Cody::Detail {
+namespace Cody {
+namespace Detail {
 
 static const char CONTINUE = ';';
 
@@ -154,7 +155,7 @@ void MessageBuffer::AppendInteger (unsigned u)
   AppendWord (v);
 }
 
-int MessageBuffer::Write (int fd)
+int MessageBuffer::Write (int fd) noexcept
 {
   size_t limit = buffer.size () - lastBol;
   ssize_t count = write (fd, &buffer.data ()[lastBol], limit);
@@ -179,7 +180,7 @@ int MessageBuffer::Write (int fd)
   return err;
 }
 
-int MessageBuffer::Read (int fd)
+int MessageBuffer::Read (int fd) noexcept
 {
   constexpr size_t blockSize = 200;
 
@@ -386,5 +387,5 @@ void MessageBuffer::LexedLine (std::string &str)
       str.append (&buffer[pos], end - pos);
     }
 }
-
-}
+} // Detail
+} // Cody

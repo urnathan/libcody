@@ -2449,7 +2449,7 @@ $as_echo_n "checking whether $CXX supports C++11... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
-#if __cplusplus <= 201103
+#if __cplusplus < 201103
 #error "C++11 is required"
 #endif
 
@@ -2469,7 +2469,7 @@ else
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
-#if __cplusplus <= 201103
+#if __cplusplus < 201103
 #error "C++11 is required"
 #endif
 
