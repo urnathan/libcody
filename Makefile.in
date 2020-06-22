@@ -42,8 +42,6 @@ DOXYGEN := @DOXYGEN@
 ALOY := @ALOY@
 INSTALL := $(srcdir)/build-aux/install-sh
 
-SYSNAME := $(shell uname 2>/dev/null)
-
 # C++ compiler options
 CXXFLAGS := @CXXFLAGS@
 CXXOPTS := $(CXXFLAGS)
@@ -72,9 +70,7 @@ CXXOPTS += $(filter-out -DHAVE_CONFIG_H,@DEFS@) -include config.h
 
 # Linker options
 LDFLAGS := @LDFLAGS@ -L .
-ifeq ($(SYSTEM),Linux)
 LDFLAGS += -Wl,--no-undefined
-endif
 LIBS := @LIBS@
 
 # Per-source & per-directory compile flags (warning: recursive)

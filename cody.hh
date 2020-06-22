@@ -16,9 +16,6 @@
 // FIXME: probably want some goop in cody-conf.h
 #include <sys/types.h>
 #include <sys/socket.h>
-#if __has_include (<sys/errno.h>)
-#  include <sys/errno.h>
-#endif
 
 namespace Cody {
 
