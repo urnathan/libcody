@@ -47,8 +47,8 @@ CXXFLAGS := @CXXFLAGS@
 CXXOPTS := $(CXXFLAGS)
 # Code generation
 ifeq ($(notdir $(firstword $(CXX))),g++)
+# It's GCC
 CXXOPTS += -fno-enforce-eh-specs
-endif
 CXXOPTS += -fno-stack-protector -fno-threadsafe-statics
 CXXOPTS += -fno-exceptions -fno-rtti
 ifeq ($(filter -fdebug-prefix-map=%,$(CXXOPTS)),)
@@ -65,6 +65,8 @@ ifneq (,$(MLEN))
 CXXOPTS += -fmessage-length=$(MLEN)
 endif
 CXXOPTS += -fdiagnostics-color=always -fno-diagnostics-show-option
+endif
+
 # Config
 CXXOPTS += $(filter-out -DHAVE_CONFIG_H,@DEFS@) -include config.h
 

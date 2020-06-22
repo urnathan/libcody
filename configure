@@ -1912,6 +1912,22 @@ if test "$toolbin" ; then
   PATH="$toolbin:$PATH"
 fi
 
+
+# Check whether --with-compiler was given.
+if test "${with_compiler+set}" = set; then :
+  withval=$with_compiler; { $as_echo "$as_me:${as_lineno-$LINENO}: checking C++ compiler" >&5
+$as_echo_n "checking C++ compiler... " >&6; }
+if test "$withval" = "yes" ; then
+  as_fn_error $? "NAME not specified" "$LINENO" 5
+elif test "$withval" = "no" ; then
+  as_fn_error $? "Gonna need a c++ compiler" "$LINENO" 5
+else
+  CXX="${withval}"
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CXX" >&5
+$as_echo "$CXX" >&6; }
+fi
+fi
+
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -2426,30 +2442,12 @@ ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ex
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 
-# Check whether --with-compiler was given.
-if test "${with_compiler+set}" = set; then :
-  withval=$with_compiler; { $as_echo "$as_me:${as_lineno-$LINENO}: checking C++ compiler" >&5
-$as_echo_n "checking C++ compiler... " >&6; }
-if test "$withval" = "yes" ; then
-  as_fn_error $? "NAME not specified" "$LINENO" 5
-elif test "$withval" = "no" ; then
-  as_fn_error $? "Gonna need a c++ compiler
-else
-  dofus!" "$LINENO" 5
-else
-  CXX="${withval}"
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CXX" >&5
-$as_echo "$CXX" >&6; }
-fi
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CXX supports C++11" >&5
-$as_echo_n "checking whether $CXX supports C++11... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CXX is for C++11" >&5
+$as_echo_n "checking whether $CXX is for C++11... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
-#if __cplusplus < 201103
+#if __cplusplus != 201103
 #error "C++11 is required"
 #endif
 
@@ -2465,11 +2463,12 @@ if ac_fn_cxx_try_compile "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 else
-  CXX+=" -std=c++11"
+  CXX_ORIG="$CXX"
+CXX+=" -std=c++11"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
-#if __cplusplus < 201103
+#if __cplusplus != 201103
 #error "C++11 is required"
 #endif
 
@@ -2485,11 +2484,34 @@ if ac_fn_cxx_try_compile "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: adding -std=c++11" >&5
 $as_echo "adding -std=c++11" >&6; }
 else
+  CXX="$CXX_ORIG"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#if __cplusplus > 201103
+#error "C++11 is required"
+#endif
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: > C++11" >&5
+$as_echo "> C++11" >&6; }
+else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 as_fn_error $? "C++11 is required" "$LINENO" 5
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+unset CXX_ORIG
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking tool libraries" >&5

@@ -79,29 +79,38 @@ AC_MSG_CHECKING([C++ compiler])
 if test "$withval" = "yes" ; then
   AC_MSG_ERROR([NAME not specified])
 elif test "$withval" = "no" ; then
-  AC_MSG_ERROR([Gonna need a c++ compiler, dofus!])
+  AC_MSG_ERROR([Gonna need a c++ compiler])
 else
   CXX="${withval}"
   AC_MSG_RESULT([$CXX])
 fi)])
 
 AC_DEFUN([CODY_CXX_11],
-[AC_MSG_CHECKING([whether $CXX supports C++11])
+[AC_MSG_CHECKING([whether $CXX is for C++11])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
-[#if __cplusplus < 201103
+[#if __cplusplus != 201103
 #error "C++11 is required"
 #endif
 ]])],
 [AC_MSG_RESULT([yes])],
-[CXX+=" -std=c++11"
+[CXX_ORIG="$CXX"
+CXX+=" -std=c++11"
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
-[#if __cplusplus < 201103
+[#if __cplusplus != 201103
 #error "C++11 is required"
 #endif
 ]])],
 AC_MSG_RESULT([adding -std=c++11]),
+[CXX="$CXX_ORIG"
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+[#if __cplusplus > 201103
+#error "C++11 is required"
+#endif
+]])],
+AC_MSG_RESULT([> C++11]),
 AC_MSG_RESULT([no])
-AC_MSG_ERROR([C++11 is required])]))])
+AC_MSG_ERROR([C++11 is required])]))
+unset CXX_ORIG])])
 
 AC_DEFUN([CODY_BUGURL],
 [AC_MSG_CHECKING([bugurl])
