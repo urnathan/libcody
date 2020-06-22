@@ -27,7 +27,8 @@
 // Escapes are \\, \', \n, \t, \_, everything else as \<hex><hex>?
 // Spaces separate words, UTF8 encoding for non-ascii chars
 
-namespace Cody::Detail {
+namespace Cody {
+namespace Detail {
 
 static const char CONTINUE = ';';
 
@@ -386,5 +387,5 @@ void MessageBuffer::LexedLine (std::string &str)
       str.append (&buffer[pos], end - pos);
     }
 }
-
-}
+} // Detail
+} // Cody
