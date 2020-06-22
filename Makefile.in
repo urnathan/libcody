@@ -72,7 +72,6 @@ CXXOPTS += $(filter-out -DHAVE_CONFIG_H,@DEFS@) -include config.h
 
 # Linker options
 LDFLAGS := @LDFLAGS@ -L .
-LDFLAGS += -Wl,--no-undefined
 LIBS := @LIBS@
 
 # Per-source & per-directory compile flags (warning: recursive)
