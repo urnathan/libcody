@@ -6,6 +6,7 @@
 #include "internal.hh"
 // C
 #include <cstring>
+#include <cerrno>
 // OS
 #include <netdb.h>
 #include <unistd.h>
