@@ -7,6 +7,7 @@
 // C++
 #include <tuple>
 // C
+#include <cerrno>
 #include <cstring>
 
 // Server code
