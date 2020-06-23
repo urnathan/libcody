@@ -10,7 +10,7 @@
   RUN: << MODULE-CMI foo ;
   RUN: <<OK
 */
-// RUN: $subdir$stem | ezio -p OUT $src |& ezio -p ERR $src
+// RUN: $subdir$stem | ezio -p OUT $test |& ezio -p ERR $test
 // RUN-END:
 
 /*

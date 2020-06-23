@@ -4,7 +4,7 @@
 // RUN:<<HELLO 1 TEST IDENT ;
 // RUN:<<MODULE-REPO ;
 // RUN:<<HELLO 1 TEST IDENT
-// RUN: $subdir$stem | ezio -p OUT1 $src |& ezio -p ERR1 $src
+// RUN: $subdir$stem | ezio -p OUT1 $test |& ezio -p ERR1 $test
 // OUT1-NEXT:HELLO 1 default ;
 // OUT1-NEXT:MODULE-REPO cmi.cache ;
 // OUT1-NEXT:ERROR 'already\_connected
@@ -15,7 +15,7 @@
 // RUN:<<MODULE-REPO ;
 // RUN:<<HELLO 1 TEST IDENT ;
 // RUN:<<MODULE-REPO
-// RUN: $subdir$stem | ezio -p OUT2 $src |& ezio -p ERR2 $src
+// RUN: $subdir$stem | ezio -p OUT2 $test |& ezio -p ERR2 $test
 // OUT2-NEXT:ERROR 'not\_connected
 // OUT2-NEXT:HELLO 1 default ;
 // OUT2-NEXT:MODULE-REPO cmi.cache

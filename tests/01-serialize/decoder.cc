@@ -3,7 +3,7 @@
 // License: Apache v2.0
 
 // RUN: <<bob 'frob dob''\nF\_b\20\61\\'
-// RUN: $subdir$stem |& ezio $src
+// RUN: $subdir$stem |& ezio $test
 // CHECK-NEXT: ^line:0 word:0 'bob'
 // CHECK-NEXT: ^line:0 word:1 'frob dob$
 // CHECK-OPTION: matchSpace
@@ -14,7 +14,7 @@
    RUN: <<'line 2' ;
    RUN: <<
 */
-// RUN: $subdir$stem |& ezio -p CHECK2 $src
+// RUN: $subdir$stem |& ezio -p CHECK2 $test
 // CHECK2-NEXT: line:0 word:0 'line-1'
 // CHECK2-NEXT: line:0 word:1 'word:1'
 // CHECK2-NEXT: line:1 word:0 'line 2'
@@ -22,7 +22,7 @@
 // CHECK2-NEXT: $EOF
 
 // RUN: <<'
-// RUN: $subdir$stem |& ezio -p CHECK3 $src
+// RUN: $subdir$stem |& ezio -p CHECK3 $test
 // CHECK3-NEXT: error:Invalid argument
 // CHECK3-NEXT: line:0 word:0 '''
 // CHECK3-NEXT: $EOF
@@ -30,7 +30,7 @@
 /* RUN: << ;
    RUN: <<'\g'
 */
-// RUN: $subdir$stem |& ezio -p CHECK4 $src
+// RUN: $subdir$stem |& ezio -p CHECK4 $test
 // CHECK4-NEXT: error:No message
 // CHECK4-NEXT: error:Invalid argument
 // CHECK4-NEXT: line:1 word:0 ''\g''

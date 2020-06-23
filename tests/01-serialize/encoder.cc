@@ -4,7 +4,7 @@
 
 // Test message encoding, both string quoting and continuation lines
 
-// RUN: $subdir$stem |& ezio $src
+// RUN: $subdir$stem |& ezio $test
 // RUN-END:
 // The ¯ is utf8-encoded as c2 af
 // CHECK-NEXT: ^bob 'frob\_dob''\n¯\\'$

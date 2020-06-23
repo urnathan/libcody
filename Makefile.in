@@ -45,9 +45,9 @@ INSTALL := $(srcdir)/build-aux/install-sh
 # C++ compiler options
 CXXFLAGS := @CXXFLAGS@
 CXXOPTS := $(CXXFLAGS)
-# Code generation
 ifeq ($(notdir $(firstword $(CXX))),g++)
-# It's GCC
+# It's GCC, or pretending to be it -- so it better smell like it!
+# Code generation
 CXXOPTS += -fno-enforce-eh-specs
 CXXOPTS += -fno-stack-protector -fno-threadsafe-statics
 CXXOPTS += -fno-exceptions -fno-rtti
@@ -65,6 +65,8 @@ ifneq (,$(MLEN))
 CXXOPTS += -fmessage-length=$(MLEN)
 endif
 CXXOPTS += -fdiagnostics-color=always -fno-diagnostics-show-option
+else
+# Add different compiler's options here
 endif
 
 # Config

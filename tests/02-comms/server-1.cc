@@ -11,7 +11,7 @@
   RUN:<<MODULE-COMPILED bar ;
   RUN:<<MODULE-IMPORT ''
 */
-// RUN: $subdir$stem | ezio -p OUT1 $src |& ezio -p ERR1 $src
+// RUN: $subdir$stem | ezio -p OUT1 $test |& ezio -p ERR1 $test
 
 // These all fail because there's nothing in the server interpretting stuff
 /*
@@ -32,7 +32,7 @@
   RUN:<<HELLO 1 TEST IDENT
   RUN:<<MODULE-REPO
 */
-// RUN: $subdir$stem | ezio -p OUT2 $src |& ezio -p ERR2 $src
+// RUN: $subdir$stem | ezio -p OUT2 $test |& ezio -p ERR2 $test
 /*
   OUT2-NEXT: ^HELLO 1 default
 */

@@ -1,7 +1,7 @@
 
 // Test client connection handshake
 // RUN: <<HELLO 1 TESTING
-// RUN: $subdir$stem | ezio -p OUT $src |& ezio -p ERR $src
+// RUN: $subdir$stem | ezio -p OUT $test |& ezio -p ERR $test
 // RUN-END:
 
 // OUT-NEXT:^HELLO {:[0-9]+} TEST IDENT$
