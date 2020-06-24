@@ -93,7 +93,7 @@ void MessageBuffer::Append (char const *str, bool quote, size_t len)
 	for (e = str; e != end; ++e)
 	  {
 	    unsigned char c = (unsigned char)*e;
-	    if (c <= ' ' || c == 0x7f || c == '\\' || c == '\'')
+	    if (c < ' ' || c == 0x7f || c == '\\' || c == '\'')
 	      break;
 	  }
       buffer.insert (buffer.end (), str, e);
@@ -111,12 +111,6 @@ void MessageBuffer::Append (char const *str, bool quote, size_t len)
 
 	case '\n':
 	  c = 'n';
-	  goto append;
-
-	case ' ':
-	  // Escape SPACE so that encoded words do not contain naked
-	  // spaces.  Use a bespoke escape, for visual effect.
-	  c = '_';
 	  goto append;
 
 	case '\'':
@@ -314,6 +308,7 @@ int MessageBuffer::Lex (std::vector<std::string> &result)
 		      break;
 
 		    case '_':
+		      // We used to escape SPACE as \_, so accept that
 		      c = ' ';
 		      ++iter;
 		      break;
