@@ -689,7 +689,7 @@ public:
   /// Initialize for reading a message block.  Enters READING state.
   void PrepareToRead ()
   {
-    write.PrepareToRead ();
+    read.PrepareToRead ();
     direction = READING;
   }
 };

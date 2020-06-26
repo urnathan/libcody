@@ -7,7 +7,7 @@
 // RUN: $subdir$stem |& ezio $test
 // RUN-END:
 // The ¯ is utf8-encoded as c2 af
-// CHECK-NEXT: ^bob 'frob\_dob''\n¯\\'$
+// CHECK-NEXT: ^bob 'frob dob''\n¯\\'$
 // CHECK-NEXT: ^2 ;$
 // CHECK-NEXT: ^3$
 // CHECK-NEXT: $EOF

@@ -19,11 +19,11 @@
   OUT1-NEXT: ^MODULE-REPO cmi.cache	;
   OUT1-NEXT: ^MODULE-CMI bar.cmi	;
   OUT1-NEXT: ^MODULE-CMI foo.cmi	;
-  OUT1-NEXT: ^ERROR 'unrecognized\_\'NOT\_
+  OUT1-NEXT: ^ERROR 'unrecognized \'NOT 
   OUT1-NEXT: ^INCLUDE-TEXT	;
   OUT1-NEXT: ^INCLUDE-TEXT	;
   OUT1-NEXT: ^OK
-  OUT1-NEXT: ^ERROR 'malformed\_
+  OUT1-NEXT: ^ERROR 'malformed 
 */
 // OUT1-NEXT:$EOF
 // ERR1-NEXT:$EOF

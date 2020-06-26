@@ -43,7 +43,7 @@ static std::tuple<char const *,
   };
 
 Server::Server (Resolver *r)
-  : resolver (r)
+  : resolver (r), direction (READING)
 {
 }
 
