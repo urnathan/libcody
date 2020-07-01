@@ -86,6 +86,15 @@ SRC_CXXFLAGS = $(CXXFLAGS$(patsubst $(srcdir)%,%,$1)) \
 	$(if $(filter-out $(srcdir)/,$1),\
 	  $(call $0,$(dir $(patsubst %/,%,$1))))
 
+ifneq ($(MAINTAINER),)
+override MAINTAINER += $1
+endif
+ifeq (@MAINTAINER@,yes)
+MAINTAINER = $2
+else
+MAINTAINER = \# --enable-maintainer-mode to rebuild $1, or make MAINTAINER=touch
+endif
+
 vpath %.in $(srcdir)
 vpath %.cc $(srcdir)
 
@@ -119,14 +128,14 @@ distclean:: clean
 	rm -f config.log config.status
 
 $(srcdir)/configure: $(srcdir)/configure.ac $(srcdir)/config.m4
-	cd $(@D) && autoconf -W all,error
+	$(call MAINTAINER,$@,cd $(@D) && autoconf -W all,error)
+
+$(srcdir)/config.h.in: $(srcdir)/configure.ac $(srcdir)/config.m4
+	$(call MAINTAINER,$@,cd $(@D) && autoheader -f -W all,error)
 
 config.h: config.status config.h.in
 	./$< --header=$@
 	touch $@
-
-$(srcdir)/config.h.in: $(srcdir)/configure.ac $(srcdir)/config.m4
-	cd $(<D) && autoheader -f -W all,error
 
 ifeq ($(filter %clean,$(MAKECMDGOALS)),)
 @CONFIG_FILES@: %: config.status %.in
