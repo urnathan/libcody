@@ -72,6 +72,17 @@ if test "$toollib" ; then
   LDFLAGS+="-L $toollib"
 fi])
 
+AC_DEFUN([CODY_NUM_CPUS],
+[AC_MSG_CHECKING([number of CPUs])
+case $build in
+     (*-*-darwin*) NUM_CPUS=$(sysctl -n hw.ncpu 2>/dev/null) ;;
+     (*) NUM_CPUS=$(grep -c '^processor' /proc/cpuinfo 2>/dev/null) ;;
+esac
+test "$NUM_CPUS" = 0 && NUM_CPUS=
+AC_MSG_RESULT([${NUM_CPUS:-unknown}])
+test "$NUM_CPUS" = 1 && NUM_CPUS=
+AC_SUBST(NUM_CPUS)])
+
 AC_DEFUN([CODY_CXX_COMPILER],
 [AC_ARG_WITH([compiler],
 AS_HELP_STRING([--with-compiler=NAME],[which compiler to use]),

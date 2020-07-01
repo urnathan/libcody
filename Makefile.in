@@ -11,13 +11,18 @@ endif
 
 # Figure out if we should set parallelism
 ifeq (,$(filter clean%,$(MAKECMDGOALS)))
-PARALLELISM := $(shell grep -c '^processor' /proc/cpuinfo 2>/dev/null)
+PARALLELISM := @NUM_CPUS@
 endif
 endif
 
 ifeq (00,$(MAKELEVEL)$(if $(PARALLELISM),0,1))
 # Although Make 4.3 documentation suggests I can set parallelism just
-# by appending to MAKEFLAGS, it doesn't seem to work
+# by appending to MAKEFLAGS, it doesn't seem to work.  It's also not
+# possible to figure out the current Make invocation's parallelism,
+# the -j option doesn't appear in MAKEFLAGS and is magically inserted
+# when that is expanded in a rule.  I can't figure how to get a rule
+# expansion into a variable to test.  Fortunately, Make propagates an
+# incoming -j option rather than the one you attempted to append
 $(info Parallelizing $(PARALLELISM) ways)
 MAKEFLAGS += -j$(PARALLELISM)
 ifneq (,$(MAKECMDGOALS))
@@ -120,7 +125,7 @@ config.h: config.status config.h.in
 	./$< --header=$@
 	touch $@
 
-$(srcdir)/config.h.in: $(srcdir)/configure.ac
+$(srcdir)/config.h.in: $(srcdir)/configure.ac $(srcdir)/config.m4
 	cd $(<D) && autoheader -f -W all,error
 
 ifeq ($(filter %clean,$(MAKECMDGOALS)),)

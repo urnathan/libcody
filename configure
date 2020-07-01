@@ -599,6 +599,7 @@ CPPFLAGS
 LDFLAGS
 CXXFLAGS
 CXX
+NUM_CPUS
 toolbin
 host_os
 host_vendor
@@ -1835,6 +1836,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+
+
 ac_aux_dir=
 for ac_dir in build-aux "$srcdir"/build-aux; do
   if test -f "$ac_dir/install-sh"; then
@@ -1959,6 +1962,17 @@ $as_echo "$toolbin" >&6; }
 if test "$toolbin" ; then
   PATH="$toolbin:$PATH"
 fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking number of CPUs" >&5
+$as_echo_n "checking number of CPUs... " >&6; }
+case $build in
+     (*-*-darwin*) NUM_CPUS=$(sysctl -n hw.ncpu 2>/dev/null) ;;
+     (*) NUM_CPUS=$(grep -c '^processor' /proc/cpuinfo 2>/dev/null) ;;
+esac
+test "$NUM_CPUS" = 0 && NUM_CPUS=
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${NUM_CPUS:-unknown}" >&5
+$as_echo "${NUM_CPUS:-unknown}" >&6; }
+test "$NUM_CPUS" = 1 && NUM_CPUS=
 
 
 # Check whether --with-compiler was given.
