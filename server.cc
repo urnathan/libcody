@@ -27,6 +27,8 @@ static int ModuleCompiledRequest (Server *, Resolver *,
 				  std::vector<std::string> &words);
 static int IncludeTranslateRequest (Server *, Resolver *,
 				     std::vector<std::string> &words);
+static int LTOCompileRequest (Server *, Resolver *,
+				     std::vector<std::string> &words);
 
 
 static std::tuple<char const *,
@@ -40,6 +42,7 @@ static std::tuple<char const *,
     {"MODULE-IMPORT", ModuleImportRequest},
     {"MODULE-COMPILED", ModuleCompiledRequest},
     {"INCLUDE-TRANSLATE", IncludeTranslateRequest},
+    {"LTO-COMPILE", LTOCompileRequest},
   };
 
 Server::Server (Resolver *r)
@@ -211,6 +214,20 @@ int IncludeTranslateRequest (Server *s, Resolver *r,
   return r->IncludeTranslateRequest (s, words[1]);
 }
 
+int LTOCompileRequest (Server *s, Resolver *r,
+			     std::vector<std::string> &args)
+{
+  //fprintf(stderr, "inside server LTOCompileRequest\n");
+  if (args.size () < 2 || args[1].empty ())
+    return -1;
+
+  //for (std::vector<std::string>::iterator arg = args.begin() ; arg != args.end(); ++arg) {
+  //  fprintf(stderr, "*arg[?] = %s\n", (*arg).c_str());
+  //}
+
+  return r->LTOCompileRequest (s, args);
+}
+
 void Server::ErrorResponse (char const *error, size_t elen)
 {
   write.BeginLine ();
@@ -257,6 +274,13 @@ void Server::IncludeTranslateResponse (bool translate)
 {
   write.BeginLine ();
   write.AppendWord (translate ? "INCLUDE-IMPORT" : "INCLUDE-TEXT");
+  write.EndLine ();
+}
+
+void Server::LTOResponse ()
+{
+  write.BeginLine ();
+  write.AppendWord ("LTO-RESPONSE");
   write.EndLine ();
 }
 

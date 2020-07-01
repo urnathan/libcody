@@ -244,6 +244,23 @@ Packet ModuleRepoResponse (std::vector<std::string> &words)
   return Packet (Client::PC_ERROR, "");
 }
 
+// LTO-COMPILE $args
+//Packet Client::LTOCompile (char const *arg, size_t argc)
+Packet Client::LTOCompile (char const **argv, size_t argc)
+{
+  write.BeginLine ();
+  write.AppendWord ("LTO-COMPILE");
+
+  for(size_t i = 0; i < argc; i++) {
+    write.AppendWord (argv[i], true, strlen(argv[i]));
+    //fprintf(stderr, "arg[%ld] = %s\n", i, argv[i]);
+    //fflush(stderr);
+  }
+  write.EndLine ();
+
+  return MaybeRequest (Detail::RC_LTO_COMPILE);
+}
+
 // MODULE-EXPORT $modulename
 Packet Client::ModuleExport (char const *module, size_t mlen)
 {

@@ -180,6 +180,18 @@ int Resolver::IncludeTranslateRequest (Server *s, std::string &include)
   return 0;
 }
 
+// TODO: this will be overriden
+int Resolver::LTOCompileRequest (Server *s, std::vector<std::string> &args) {
+  fprintf(stderr, "inside cody resolver LTOCompileRequest\n");
+
+  for (std::vector<std::string>::iterator arg = args.begin() ; arg != args.end(); ++arg) {
+    fprintf(stderr, "*arg[?] = %s\n", (*arg).c_str());
+  }
+
+  //s->LTOResponse();
+  return 0;
+}
+
 void Resolver::ErrorResponse (Server *server, std::string &&msg)
 {
   server->ErrorResponse (msg);

@@ -170,6 +170,7 @@ enum RequestCode
   RC_MODULE_IMPORT,
   RC_MODULE_COMPILED,
   RC_INCLUDE_TRANSLATE,
+  RC_LTO_COMPILE,
   RC_HWM
 };
 
@@ -413,6 +414,21 @@ public:
   }
 
 public:
+  /// LTO compile
+  /// @param str compile args
+  /// @result packet std error output
+  Packet LTOCompile (char const **argv, size_t argc = ~size_t (0));
+
+  Packet LTOCompile (std::vector<const char *> &args) {
+    return LTOCompile(&args[0], args.size());
+  }
+
+  /// LTO invoke subprocesses
+  /// @param TODO: vector of strings describing compile commands
+  /// @result packet std error output
+  //Packet InvokeSubprocesses (std::vector<std::string> &commands);
+
+public:
   /// Request compiler module repository
   /// @result packet indicating repo
   Packet ModuleRepo ();
@@ -540,6 +556,9 @@ public:
   virtual int ModuleImportRequest (Server *s, std::string &module);
   virtual int ModuleCompiledRequest (Server *s, std::string &module);
   virtual int IncludeTranslateRequest (Server *s, std::string &include);
+
+public:
+  virtual int LTOCompileRequest (Server *s, std::vector<std::string> &args);
 };
 
 
@@ -661,6 +680,10 @@ public:
   /// Accumulate an include translate response
   /// @param xlate boolean indicating if translation should occur
   void IncludeTranslateResponse (bool xlate);
+
+public:
+  // TODO: success code?
+  void LTOResponse ();
 
 public:
   /// Write message block to client.  Semantics as for
