@@ -95,7 +95,7 @@ case "$enable_maintainer_mode" in
 esac
 AC_MSG_CHECKING([maintainer-mode])
 AC_MSG_RESULT([$maintainer_mode])
-test $maintainer_mode = yes && MAINTAINER=yes
+test "$maintainer_mode" = yes && MAINTAINER=yes
 AC_SUBST(MAINTAINER)])
 
 AC_DEFUN([CODY_CXX_COMPILER],
