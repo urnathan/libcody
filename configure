@@ -1997,7 +1997,7 @@ esac
 $as_echo_n "checking maintainer-mode... " >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $maintainer_mode" >&5
 $as_echo "$maintainer_mode" >&6; }
-test $maintainer_mode = yes && MAINTAINER=yes
+test "$maintainer_mode" = yes && MAINTAINER=yes
 
 
 # Check whether --with-compiler was given.
