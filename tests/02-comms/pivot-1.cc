@@ -41,7 +41,7 @@ class Handler : public Resolver
 
 Handler handler;
 
-class Initial : public Resolver 
+class Initial : public Resolver
 {
   virtual Handler *ConnectRequest (Server *s, unsigned v,
 				   std::string &agent, std::string &ident)

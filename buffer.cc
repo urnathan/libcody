@@ -135,7 +135,7 @@ void MessageBuffer::Append (char const *str, bool quote, size_t len)
     }
 
   if (quote)
-    buffer.push_back ('\'');  
+    buffer.push_back ('\'');
 }
 
 void MessageBuffer::Append (char c)

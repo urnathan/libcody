@@ -208,7 +208,7 @@ private:
 
 public:
   Packet (unsigned c, size_t i = 0)
-    : integer (i), cat (INTEGER), code (c) 
+    : integer (i), cat (INTEGER), code (c)
   {
   }
   Packet (unsigned c, std::string &&s)
@@ -303,7 +303,7 @@ class Server;
 
 ///
 /// Client-side (compiler) object.
-class Client 
+class Client
 {
 public:
   /// Response packet codes
@@ -491,7 +491,7 @@ private:
 /// a different resolved object to service the remainder of the
 /// connection -- for instance depending on the compiler that is
 /// making the requests.
-class Resolver 
+class Resolver
 {
 public:
   Resolver () = default;

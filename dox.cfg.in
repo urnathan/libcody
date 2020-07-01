@@ -314,7 +314,7 @@ OPTIMIZE_OUTPUT_SLICE  = NO
 # the files are not read by doxygen.
 
 EXTENSION_MAPPING      = no_extension=C++ \
-		       	 hh=C++ 
+		       	 hh=C++
 
 # If the MARKDOWN_SUPPORT tag is enabled then doxygen pre-processes all comments
 # according to the Markdown format, which allows for more readable
@@ -839,7 +839,7 @@ INPUT_ENCODING         = UTF-8
 # *.m, *.markdown, *.md, *.mm, *.dox, *.py, *.pyw, *.f90, *.f95, *.f03, *.f08,
 # *.f, *.for, *.tcl, *.vhd, *.vhdl, *.ucf, *.qsf and *.ice.
 
-FILE_PATTERNS          = *.cc *.hh 
+FILE_PATTERNS          = *.cc *.hh
 
 # The RECURSIVE tag can be used to specify whether or not subdirectories should
 # be searched for input files as well.
