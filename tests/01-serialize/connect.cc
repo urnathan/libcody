@@ -27,5 +27,4 @@ int main (int, char *[])
 
   std::cerr << "Code:" << token.GetCode () << '\n';
   std::cerr << "Version:" << token.GetInteger () << '\n';
-  
 }

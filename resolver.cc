@@ -37,7 +37,7 @@ inline bool IsAbsPath (char const *str)
 #endif
 
 constexpr char DOT_REPLACE = ','; // Replace . directories
-constexpr char COLON_REPLACE = '-'; // Replace : (partition char) 
+constexpr char COLON_REPLACE = '-'; // Replace : (partition char)
 constexpr char const REPO_DIR[] = "cmi.cache";
 
 namespace Cody {
@@ -76,7 +76,7 @@ std::string Resolver::GetCMIName (std::string const &module)
     {
       if (!is_abs)
 	result[0] = DOT_REPLACE;
-      
+
       /* Map .. to DOT_REPLACE, DOT_REPLACE.  */
       for (size_t ix = 1; ; ix++)
 	{
