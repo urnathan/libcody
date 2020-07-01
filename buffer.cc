@@ -30,7 +30,7 @@
 namespace Cody {
 namespace Detail {
 
-static const char CONTINUE = ';';
+static const char CONTINUE = S2C(u8";");
 
 void MessageBuffer::BeginLine ()
 {
@@ -38,9 +38,9 @@ void MessageBuffer::BeginLine ()
     {
       // Terminate the previous line with a continuation
       buffer.reserve (buffer.size () + 3);
-      buffer.push_back (' ');
+      buffer.push_back (S2C(u8" "));
       buffer.push_back (CONTINUE);
-      buffer.push_back ('\n');
+      buffer.push_back (S2C(u8"\n"));
     }
   lastBol = buffer.size ();
 }
@@ -65,11 +65,11 @@ void MessageBuffer::Append (char const *str, bool quote, size_t len)
       for (size_t ix = len; ix--;)
 	{
 	  unsigned char c = (unsigned char)str[ix];
-	  if (!((c >= 'a' && c <= 'z')
-		|| (c >= 'A' && c <= 'Z')
-		|| (c >= '0' && c <= '9')
-		|| c == '-' || c == '+' || c == '_'
-		|| c == '/' || c == '%' || c == '.'))
+	  if (!((c >= S2C(u8"a") && c <= S2C(u8"z"))
+		|| (c >= S2C(u8"A") && c <= S2C(u8"Z"))
+		|| (c >= S2C(u8"0") && c <= S2C(u8"9"))
+		|| c == S2C(u8"-") || c == S2C(u8"+") || c == S2C(u8"_")
+		|| c == S2C(u8"/") || c == S2C(u8"%") || c == S2C(u8".")))
 	    {
 	      quote = true;
 	      break;
@@ -81,7 +81,7 @@ void MessageBuffer::Append (char const *str, bool quote, size_t len)
   buffer.reserve (buffer.size () + len * (quote ? 3 : 1) + 2);
 
   if (quote)
-    buffer.push_back ('\'');
+    buffer.push_back (S2C(u8"'"));
 
   for (auto *end = str + len; str != end;)
     {
@@ -93,7 +93,8 @@ void MessageBuffer::Append (char const *str, bool quote, size_t len)
 	for (e = str; e != end; ++e)
 	  {
 	    unsigned char c = (unsigned char)*e;
-	    if (c < ' ' || c == 0x7f || c == '\\' || c == '\'')
+	    if (c < S2C(u8" ") || c == 0x7f
+		|| c == S2C(u8"\\") || c == S2C(u8"'"))
 	      break;
 	  }
       buffer.insert (buffer.end (), str, e);
@@ -102,19 +103,19 @@ void MessageBuffer::Append (char const *str, bool quote, size_t len)
       if (str == end)
 	break;
 
-      buffer.push_back ('\\');
+      buffer.push_back (S2C(u8"\\"));
       switch (unsigned char c = (unsigned char)*str++)
 	{
-	case '\t':
-	  c = 't';
+	case S2C(u8"\t"):
+	  c = S2C(u8"t");
 	  goto append;
 
-	case '\n':
-	  c = 'n';
+	case S2C(u8"\n"):
+	  c = S2C(u8"n");
 	  goto append;
 
-	case '\'':
-	case '\\':
+	case S2C(u8"'"):
+	case S2C(u8"\\"):
 	append:
 	  buffer.push_back (c);
 	  break;
@@ -126,16 +127,16 @@ void MessageBuffer::Append (char const *str, bool quote, size_t len)
 	      shift -= 4;
 
 	      char nibble = (c >> shift) & 0xf;
-	      nibble += '0';
-	      if (nibble > '9')
-		nibble += 'a' - ('9' + 1);
+	      nibble += S2C(u8"0");
+	      if (nibble > S2C(u8"9"))
+		nibble += S2C(u8"a") - (S2C(u8"9") + 1);
 	      buffer.push_back (nibble);
 	    }
 	}
     }
 
   if (quote)
-    buffer.push_back ('\'');
+    buffer.push_back (S2C(u8"'"));
 }
 
 void MessageBuffer::Append (char c)
@@ -198,7 +199,7 @@ int MessageBuffer::Read (int fd) noexcept
   bool more = true;
   for (;;)
     {
-      auto newline = std::find (iter, buffer.end (), '\n');
+      auto newline = std::find (iter, buffer.end (), S2C(u8"\n"));
       if (newline == buffer.end ())
 	break;
       more = newline != buffer.begin () && newline[-1] == CONTINUE;
@@ -227,7 +228,7 @@ int MessageBuffer::Lex (std::vector<std::string> &result)
   if (IsAtEnd ())
     return ENOMSG;
 
-  Assert (buffer.back () == '\n');
+  Assert (buffer.back () == S2C(u8"\n"));
 
   auto iter = buffer.begin () + lastBol;
 
@@ -236,25 +237,25 @@ int MessageBuffer::Lex (std::vector<std::string> &result)
       char c = *iter;
 
       ++iter;
-      if (c == ' ' || c == '\t')
+      if (c == S2C(u8" ") || c == S2C(u8"\t"))
 	{
 	  word = nullptr;
 	  continue;
 	}
 
-      if (c == '\n')
+      if (c == S2C(u8"\n"))
 	break;
 
       if (c == CONTINUE)
 	{
 	  // Line continuation
-	  if (word || *iter != '\n')
+	  if (word || *iter != S2C(u8"\n"))
 	    goto malformed;
 	  ++iter;
 	  break;
 	}
 
-      if (c <= ' ' || c >= 0x7f)
+      if (c <= S2C(u8" ") || c >= 0x7f)
 	goto malformed;
 
       if (!word)
@@ -263,20 +264,20 @@ int MessageBuffer::Lex (std::vector<std::string> &result)
 	  word = &result.back ();
 	}
 
-      if (c == '\'')
+      if (c == S2C(u8"'"))
 	{
 	  // Quoted word
 	  for (;;)
 	    {
 	      c = *iter;
 
-	      if (c == '\n')
+	      if (c == S2C(u8"\n"))
 		{
 		malformed:;
 		  result.clear ();
-		  iter = std::find (iter, buffer.end (), '\n');
+		  iter = std::find (iter, buffer.end (), S2C(u8"\n"));
 		  auto back = iter;
-		  if (back[-1] == CONTINUE  && back[-2] == ' ')
+		  if (back[-1] == CONTINUE  && back[-2] == S2C(u8" "))
 		    // Smells like a line continuation
 		    back -= 2;
 		  result.emplace_back (&buffer[lastBol],
@@ -286,35 +287,35 @@ int MessageBuffer::Lex (std::vector<std::string> &result)
 		  return EINVAL;
 		}
 
-	      if (c < ' ' || c >= 0x7f)
+	      if (c < S2C(u8" ") || c >= 0x7f)
 		goto malformed;
 
 	      ++iter;
-	      if (c == '\'')
+	      if (c == S2C(u8"'"))
 		break;
 
-	      if (c == '\\')
+	      if (c == S2C(u8"\\"))
 		// escape
 		switch (c = *iter)
 		  {
-		    case '\\':
-		    case '\'':
+		    case S2C(u8"\\"):
+		    case S2C(u8"'"):
 		      ++iter;
 		      break;
 
-		    case 'n':
-		      c = '\n';
+		    case S2C(u8"n"):
+		      c = S2C(u8"\n");
 		      ++iter;
 		      break;
 
-		    case '_':
+		    case S2C(u8"_"):
 		      // We used to escape SPACE as \_, so accept that
-		      c = ' ';
+		      c = S2C(u8" ");
 		      ++iter;
 		      break;
 
-		    case 't':
-		      c = '\t';
+		    case S2C(u8"t"):
+		      c = S2C(u8"\t");
 		      ++iter;
 		      break;
 
@@ -324,22 +325,22 @@ int MessageBuffer::Lex (std::vector<std::string> &result)
 			for (unsigned nibble = 0; nibble != 2; nibble++)
 			  {
 			    c = *iter;
-			    if (c < '0')
+			    if (c < S2C(u8"0"))
 			      {
 				if (!nibble)
 				  goto malformed;
 				break;
 			      }
-			    else if (c <= '9')
-			      c -= '0';
-			    else if (c < 'a')
+			    else if (c <= S2C(u8"9"))
+			      c -= S2C(u8"0");
+			    else if (c < S2C(u8"a"))
 			      {
 				if (!nibble)
 				  goto malformed;
 				break;
 			      }
-			    else if (c <= 'f')
-			      c -= 'a' - 10;
+			    else if (c <= S2C(u8"f"))
+			      c -= S2C(u8"a") - 10;
 			    else
 			      {
 				if (!nibble)
@@ -372,11 +373,11 @@ void MessageBuffer::LexedLine (std::string &str)
     {
       size_t pos = lastBol - 1;
       for (; pos; pos--)
-	if (buffer[pos-1] == '\n')
+	if (buffer[pos-1] == S2C(u8"\n"))
 	  break;
 
       size_t end = lastBol - 1;
-      if (buffer[end-1] == CONTINUE && buffer[end-2] == ' ')
+      if (buffer[end-1] == CONTINUE && buffer[end-2] == S2C(u8" "))
 	// Strip line continuation
 	end -= 2;
       str.append (&buffer[pos], end - pos);
