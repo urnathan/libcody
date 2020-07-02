@@ -245,14 +245,14 @@ Packet ModuleRepoResponse (std::vector<std::string> &words)
 }
 
 // LTO-COMPILE $args
-Packet Client::LTOCompile (char const **argv, size_t argc)
+Packet Client::LTOCompile (char const * const *argv, size_t argc)
 {
   write.BeginLine ();
   write.AppendWord ("LTO-COMPILE");
 
   for(size_t i = 0; i < argc; i++) 
     {
-      write.AppendWord (argv[i], true, strlen(argv[i]));
+      write.AppendWord (argv[i]);
     }
   write.EndLine ();
   return MaybeRequest (Detail::RC_LTO_COMPILE);

@@ -182,7 +182,7 @@ int Resolver::IncludeTranslateRequest (Server *s, std::string &include)
 
 int Resolver::LTOCompileRequest (Server *s, std::vector<std::string> &args) 
 {
-  fprintf (stderr, "not implemented\n");
+  s->ErrorResponse ("unimplemented");
   return 0;
 }
 
