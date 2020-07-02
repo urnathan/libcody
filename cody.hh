@@ -31,7 +31,7 @@ namespace Detail  {
 template<unsigned I>
 constexpr char S2C (char const (&s)[I])
 {
-  static_assert (I == 2);
+  static_assert (I == 2, "only single octet strings may be converted");
   return s[0];
 }
 
