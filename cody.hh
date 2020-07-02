@@ -419,8 +419,9 @@ public:
   /// @result packet std error output
   Packet LTOCompile (char const **argv, size_t argc = ~size_t (0));
 
-  Packet LTOCompile (std::vector<const char *> &args) {
-    return LTOCompile(&args[0], args.size());
+  Packet LTOCompile (std::vector<const char *> &args) 
+  {
+    return LTOCompile (&args[0], args.size());
   }
 
 public:
