@@ -423,11 +423,6 @@ public:
     return LTOCompile(&args[0], args.size());
   }
 
-  /// LTO invoke subprocesses
-  /// @param TODO: vector of strings describing compile commands
-  /// @result packet std error output
-  //Packet InvokeSubprocesses (std::vector<std::string> &commands);
-
 public:
   /// Request compiler module repository
   /// @result packet indicating repo

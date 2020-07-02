@@ -217,13 +217,8 @@ int IncludeTranslateRequest (Server *s, Resolver *r,
 int LTOCompileRequest (Server *s, Resolver *r,
 			     std::vector<std::string> &args)
 {
-  //fprintf(stderr, "inside server LTOCompileRequest\n");
   if (args.size () < 2 || args[1].empty ())
     return -1;
-
-  //for (std::vector<std::string>::iterator arg = args.begin() ; arg != args.end(); ++arg) {
-  //  fprintf(stderr, "*arg[?] = %s\n", (*arg).c_str());
-  //}
 
   return r->LTOCompileRequest (s, args);
 }
