@@ -250,12 +250,15 @@ the name of the CMI to read, this possibly elides a subsequent
 
 ## Building libCody
 
-Libcody is written in C++11.
+Libcody is written in C++11.  (It's a intended for compilers, so
+there'd be a boostrapping problem if it used the latest and greatest.)
 
 It uses the usual `configure`, `make`, `make check` & `make install`
-sequence.  Excitingly it uses my own `joust` test harness, so you'll
-need to build and install that somewhere, if you want the comfort of
-testing.
+sequence.  It does not support building in the source directory --
+that just didn't drop out, and it's not how I build things (because,
+again, for compilers).  Excitingly it uses my own `joust` test
+harness, so you'll need to build and install that somewhere, if you
+want the comfort of testing.
 
 The following configure options are available, in addition to the usual set:
 
@@ -291,7 +294,7 @@ When building, you can override the default optimization flags with
 `CXXFLAGS=$flags`.  I often build a debuggable library with `make
 CXXFLAGS=-g3`.
 
-The makefile will also parallelize according to the number of CPUs,
+The `Makefile` will also parallelize according to the number of CPUs,
 unless you specify explicitly with a `-j` option.  This is a little
 clunky, as it's not possible to figure out inside the makefile whether
 the user provided `-j`.  (Or at least I've not figured out how.)

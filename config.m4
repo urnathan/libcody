@@ -2,6 +2,11 @@
 # Copyright (C) 2019-2020 Nathan Sidwell, nathan@acm.org
 # License: Apache v2.0
 
+AC_DEFUN([CODY_BUILD_DIR],
+[if test -e configure ; then
+  AC_MSG_ERROR([Do not build in the source dir.  Create an obj dir and build there.  Reasons])
+fi])
+
 AC_DEFUN([CODY_TOOL_BIN],
 [AC_MSG_CHECKING([tool binaries])
 AC_ARG_WITH([toolbin],
