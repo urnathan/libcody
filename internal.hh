@@ -16,7 +16,7 @@
 
 namespace Cody {
 
-#if CODY_CHECKING
+#if NMS_CHECKING
 class Location
 {
 protected:
@@ -63,7 +63,7 @@ public:
 void HCF [[noreturn]]
 (
  char const *msg
-#if CODY_CHECKING
+#if NMS_CHECKING
  , Location const = Location ()
 #if !CODY_LOC_BUILTIN && !CODY_LOC_SOURCE
 #define HCF(M) HCF ((M), Cody::Location (__FILE__, __LINE__))
@@ -71,7 +71,7 @@ void HCF [[noreturn]]
 #endif
  ) noexcept;
 
-#if CODY_CHECKING
+#if NMS_CHECKING
 void AssertFailed [[noreturn]] (Location loc = Location ());
 void Unreachable [[noreturn]] (Location loc = Location ());
 #if !CODY_LOC_BUILTIN && !CODY_LOC_SOURCE

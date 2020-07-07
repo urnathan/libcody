@@ -9,22 +9,22 @@ m4_include(config.m4)
 AC_CONFIG_AUX_DIR(build-aux)
 AC_SUBST(PACKAGE_VERSION)
 
-CODY_BUILD_DIR
+NMS_NOT_IN_SOURCE
 AC_CANONICAL_HOST
 
-CODY_TOOL_BIN
-CODY_NUM_CPUS
-CODY_MAINTAINER_MODE
-CODY_CXX_COMPILER
+NMS_TOOLS
+NMS_NUM_CPUS
+NMS_MAINTAINER_MODE
+NMS_CXX_COMPILER
 AC_LANG(C++)
 AC_PROG_CXX
-CODY_CXX_11
-CODY_LINK_OPT([-Wl,--no-undefined])
-CODY_TOOL_LIB
-CODY_TOOL_INC
+NMS_CXX_11
+NMS_TOOL_DIRS
+NMS_LINK_OPT([-Wl,--no-undefined])
+NMS_CONFIG_FILES([gdbinit dox.cfg])
 
-CODY_BUGURL
-CODY_ENABLE_CHECKING
+NMS_BUGURL
+NMS_ENABLE_CHECKING
 
 AC_CONFIG_HEADER(config.h)
 AC_CHECK_TOOL([AR],[ar])
@@ -32,20 +32,5 @@ AC_CHECK_TOOL([DOXYGEN],[doxygen],[: NOTdoxygen])
 AC_CHECK_TOOL([ALOY],[aloy],[: NOTaloy])
 AH_VERBATIM([_GNU_SOURCE],[#define _GNU_SOURCE 1])
 AH_VERBATIM([_FORTIFY_SOURCE],[#undef _FORTIFY_SOURCE])
-
-for generated in config.h.in configure ; do
-  if test $srcdir/configure.ac -nt $srcdir/$generated ; then
-    touch $srcdir/$generated
-  fi
-done
-
-CONFIG_FILES="Makefile gdbinit dox.cfg"
-for make in Makesub tests/Makesub ; do
-  test -f ${srcdir}/$make.in && CONFIG_FILES+=" $make"
-done
-AC_CONFIG_FILES([$CONFIG_FILES])
-
-AC_SUBST(configure_args,[$ac_configure_args])
-AC_SUBST(CONFIG_FILES)
 
 AC_OUTPUT

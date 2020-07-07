@@ -13,7 +13,7 @@
 
 namespace Cody {
 
-#if CODY_CHECKING
+#if NMS_CHECKING
 void (AssertFailed) (Location loc)
 {
   (HCF) ("assertion failed", loc);
@@ -25,14 +25,14 @@ void (Unreachable) (Location loc)
 #endif
 
 void (HCF) (char const *msg
-#if CODY_CHECKING
+#if NMS_CHECKING
 	  , Location const loc
 #endif
 	  ) noexcept
 { // HCF - you goofed!
   __asm__ volatile ("nop");  // HCF - you goofed!
 
-#if !CODY_CHECKING
+#if !NMS_CHECKING
   Location loc (nullptr, 0);
 #endif
 
@@ -65,7 +65,7 @@ void BuildNote (FILE *stream) noexcept
     fprintf (stream, "Source %s.\n", REVISION);
 
   fprintf (stream, "Build is %s & %s.\n",
-#if !CODY_CHECKING
+#if !NMS_CHECKING
 	   "un"
 #endif
 	   "checked",

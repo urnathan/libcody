@@ -1,4 +1,4 @@
-# CODYlib		-*- mode:Makefile -*-
+# Nathan's generic Makefile		-*- mode:Makefile -*-
 # Copyright (C) 2019-2020 Nathan Sidwell, nathan@acm.org
 # License: Apache v2.0
 
@@ -39,12 +39,11 @@ exec_prefix := @exec_prefix@
 bindir := @bindir@
 libdir := @libdir@
 includedir := @includedir@
+SUBDIRS := @SUBDIRS@
 SHELL := zsh
 
 CXX := @CXX@
 AR := @AR@
-DOXYGEN := @DOXYGEN@
-ALOY := @ALOY@
 INSTALL := $(srcdir)/build-aux/install-sh
 
 # C++ compiler options
@@ -105,9 +104,13 @@ vpath %.cc $(srcdir)
 	$(CXX) $(strip $(CXXOPTS) -MMD -MP \
 	  -MF ${@:.o=.d} $(call SRC_CXXFLAGS,$<)) -c -o $@ $<
 
-all::
+all:: Makefile $(addprefix all.,$(SUBDIRS))
 
-revision.stamp: $(srcdir)
+check:: Makefile $(addprefix check.,$(SUBDIRS))
+
+clean:: Makefile $(addprefix clean.,$(SUBDIRS))
+
+revision.stamp: $(addprefix $(srcdir)/,$(SUBDIRS))
 	@revision=$$(git -C $(srcdir) rev-parse HEAD 2>/dev/null) ;\
 	if test -n "$$revision" ;\
 	then revision=git-$$revision ;\
@@ -126,6 +129,7 @@ clean::
 
 distclean:: clean
 	rm -f config.log config.status
+	rm -rf $(SUBDIRS)
 
 $(srcdir)/configure: $(srcdir)/configure.ac $(srcdir)/config.m4
 	$(call MAINTAINER,$@,cd $(@D) && autoconf -W all,error)
@@ -157,6 +161,7 @@ clean::
 
 .PHONY: all check clean distclean maintainer-clean
 
--include Makesub tests/Makesub
+-include $(addsuffix /Makesub,. $(SUBDIRS))
+-include $(addsuffix /tests/Makesub,. $(SUBDIRS))
 
 endif
