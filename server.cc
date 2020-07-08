@@ -28,19 +28,21 @@ static int ModuleCompiledRequest (Server *, Resolver *,
 static int IncludeTranslateRequest (Server *, Resolver *,
 				     std::vector<std::string> &words);
 
-
-static std::tuple<char const *,
-		  int (*) (Server *, Resolver *, std::vector<std::string> &)>
+namespace {
+using RequestFn = int (Server *, Resolver *, std::vector<std::string> &);
+using RequestPair = std::tuple<char const *, RequestFn *>;
+static RequestPair
   const requestTable[Detail::RC_HWM] =
   {
     // Same order as enum RequestCode
-    {u8"HELLO", nullptr},
-    {u8"MODULE-REPO", ModuleRepoRequest},
-    {u8"MODULE-EXPORT", ModuleExportRequest},
-    {u8"MODULE-IMPORT", ModuleImportRequest},
-    {u8"MODULE-COMPILED", ModuleCompiledRequest},
-    {u8"INCLUDE-TRANSLATE", IncludeTranslateRequest},
+    RequestPair {u8"HELLO", nullptr},
+    RequestPair {u8"MODULE-REPO", ModuleRepoRequest},
+    RequestPair {u8"MODULE-EXPORT", ModuleExportRequest},
+    RequestPair {u8"MODULE-IMPORT", ModuleImportRequest},
+    RequestPair {u8"MODULE-COMPILED", ModuleCompiledRequest},
+    RequestPair {u8"INCLUDE-TRANSLATE", IncludeTranslateRequest},
   };
+}
 
 Server::Server (Resolver *r)
   : resolver (r), direction (READING)

@@ -7,6 +7,7 @@
 // C++
 #if __GNUC__ >= 10
 #define CODY_LOC_BUILTIN 1
+#elif !defined (__has_include)
 #elif __has_include (<source_location>)
 #include <source_location>
 #define CODY_LOC_SOURCE 1
