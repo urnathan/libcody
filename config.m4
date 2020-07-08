@@ -44,7 +44,7 @@ AC_SUBST(toolbin)])
 
 AC_DEFUN([NMS_TOOL_DIRS],
 [if test "$tools" && test -d "$tools/include" ; then
-  CXX+=" -I $tools/include"
+  CXX+=" -I$tools/include"
 fi
 if test "$tools" && test -d "$tools/lib" ; then
   toollib="$tools/lib"

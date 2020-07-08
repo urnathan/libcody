@@ -3,7 +3,7 @@
 # License: Apache v2.0
 
 DOXYGEN := @DOXYGEN@
-CXXFLAGS/ := -I $(srcdir)
+CXXFLAGS/ := -I$(srcdir)
 LIBCODY.O := buffer.o client.o fatal.o netclient.o netserver.o \
 	resolver.o packet.o server.o
 

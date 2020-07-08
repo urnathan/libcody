@@ -42,12 +42,14 @@ includedir := @includedir@
 SUBDIRS := @SUBDIRS@
 SHELL := zsh
 
-CXX := @CXX@
+# We have to place the -I paths last, so that building will see -I paths to us
+CXX := $(filter-out -I%,@CXX@)
 AR := @AR@
 INSTALL := $(srcdir)/build-aux/install-sh
 
 # C++ compiler options
 CXXFLAGS := @CXXFLAGS@
+CXXINC := $(filter -I%,@CXX@)
 CXXOPTS := $(CXXFLAGS)
 ifeq ($(notdir $(firstword $(CXX))),g++)
 # It's GCC, or pretending to be it -- so it better smell like it!
@@ -77,7 +79,7 @@ endif
 CXXOPTS += $(filter-out -DHAVE_CONFIG_H,@DEFS@) -include config.h
 
 # Linker options
-LDFLAGS := @LDFLAGS@ -L .
+LDFLAGS := -L. @LDFLAGS@
 LIBS := @LIBS@
 
 # Per-source & per-directory compile flags (warning: recursive)
@@ -101,8 +103,8 @@ vpath %.cc $(srcdir)
 
 %.o: %.cc
 	@mkdir -p $(dir $@)
-	$(CXX) $(strip $(CXXOPTS) -MMD -MP \
-	  -MF ${@:.o=.d} $(call SRC_CXXFLAGS,$<)) -c -o $@ $<
+	$(CXX) $(strip $(CXXOPTS) $(call SRC_CXXFLAGS,$<) $(CXXINC)) \
+	  -MMD -MP -MF ${@:.o=.d} -c -o $@ $<
 
 all:: Makefile $(addprefix all.,$(SUBDIRS))
 
