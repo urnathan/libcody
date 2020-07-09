@@ -394,8 +394,6 @@ public:
   }
 
 public:
-
-
   ///
   /// Perform connection handshake.  All othe requests will result in
   /// errors, until handshake is succesful.
@@ -416,11 +414,10 @@ public:
   }
 
 public:
-
   /// LTO compile
   /// @param str compile args
   /// TODO: @result packet std error output
-  Packet LTOCompile (char const * const *argv, size_t argc);
+  Packet LTOCompile (char const *const *argv, size_t argc);
 
   Packet LTOCompile (std::vector<const char *> &args) 
   {
