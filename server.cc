@@ -27,6 +27,8 @@ static int ModuleCompiledRequest (Server *, Resolver *,
 				  std::vector<std::string> &words);
 static int IncludeTranslateRequest (Server *, Resolver *,
 				     std::vector<std::string> &words);
+static int LTOCompileRequest (Server *, Resolver *,
+				     std::vector<std::string> &words);
 
 namespace {
 using RequestFn = int (Server *, Resolver *, std::vector<std::string> &);
@@ -41,6 +43,7 @@ static RequestPair
     RequestPair {u8"MODULE-IMPORT", ModuleImportRequest},
     RequestPair {u8"MODULE-COMPILED", ModuleCompiledRequest},
     RequestPair {u8"INCLUDE-TRANSLATE", IncludeTranslateRequest},
+    RequestPair {u8"LTO-COMPILE", LTOCompileRequest},
   };
 }
 
@@ -214,6 +217,15 @@ int IncludeTranslateRequest (Server *s, Resolver *r,
   return r->IncludeTranslateRequest (s, words[1]);
 }
 
+int LTOCompileRequest (Server *s, Resolver *r,
+			     std::vector<std::string> &args)
+{
+  if (args.size () < 2 || args[1].empty ())
+    return -1;
+
+  return r->LTOCompileRequest (s, args);
+}
+
 void Server::ErrorResponse (char const *error, size_t elen)
 {
   write.BeginLine ();
@@ -260,6 +272,13 @@ void Server::IncludeTranslateResponse (bool translate)
 {
   write.BeginLine ();
   write.AppendWord (translate ? u8"INCLUDE-IMPORT" : u8"INCLUDE-TEXT");
+  write.EndLine ();
+}
+
+void Server::LTOResponse ()
+{
+  write.BeginLine ();
+  write.AppendWord ("LTO-RESPONSE");
   write.EndLine ();
 }
 

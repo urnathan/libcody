@@ -180,6 +180,12 @@ int Resolver::IncludeTranslateRequest (Server *s, std::string &include)
   return 0;
 }
 
+int Resolver::LTOCompileRequest (Server *s, std::vector<std::string> &args) 
+{
+  s->ErrorResponse ("unimplemented");
+  return 0;
+}
+
 void Resolver::ErrorResponse (Server *server, std::string &&msg)
 {
   server->ErrorResponse (msg);
