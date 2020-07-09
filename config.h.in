@@ -4,7 +4,7 @@
 #undef BUGURL
 
 /* Enable checking */
-#undef CODY_CHECKING
+#undef NMS_CHECKING
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT

@@ -2,7 +2,10 @@
 # Copyright (C) 2019-2020 Nathan Sidwell, nathan@acm.org
 # License: Apache v2.0
 
-CXXFLAGS/ := -I $(srcdir)
+DOXYGEN := @DOXYGEN@
+CXXFLAGS/ := -I$(srcdir)
+LIBCODY.O := buffer.o client.o fatal.o netclient.o netserver.o \
+	resolver.o packet.o server.o
 
 all:: .gdbinit
 
@@ -13,9 +16,6 @@ clean::
 	rm -f gdbinit .gdbinit
 
 all:: libcody.a
-
-LIBCODY.O := buffer.o client.o fatal.o netclient.o netserver.o \
-	resolver.o packet.o server.o
 
 libcody.a: $(LIBCODY.O)
 	$(AR) -cr $@ $^

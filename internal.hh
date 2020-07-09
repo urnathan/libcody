@@ -7,6 +7,7 @@
 // C++
 #if __GNUC__ >= 10
 #define CODY_LOC_BUILTIN 1
+#elif !defined (__has_include)
 #elif __has_include (<source_location>)
 #include <source_location>
 #define CODY_LOC_SOURCE 1
@@ -16,7 +17,7 @@
 
 namespace Cody {
 
-#if CODY_CHECKING
+#if NMS_CHECKING
 class Location
 {
 protected:
@@ -63,7 +64,7 @@ public:
 void HCF [[noreturn]]
 (
  char const *msg
-#if CODY_CHECKING
+#if NMS_CHECKING
  , Location const = Location ()
 #if !CODY_LOC_BUILTIN && !CODY_LOC_SOURCE
 #define HCF(M) HCF ((M), Cody::Location (__FILE__, __LINE__))
@@ -71,7 +72,7 @@ void HCF [[noreturn]]
 #endif
  ) noexcept;
 
-#if CODY_CHECKING
+#if NMS_CHECKING
 void AssertFailed [[noreturn]] (Location loc = Location ());
 void Unreachable [[noreturn]] (Location loc = Location ());
 #if !CODY_LOC_BUILTIN && !CODY_LOC_SOURCE

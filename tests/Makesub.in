@@ -2,6 +2,7 @@
 # Copyright (C) 2019-2020 Nathan Sidwell, nathan@acm.org
 # License: Apache v2.0
 
+ALOY := @ALOY@
 TESTS := $(patsubst $(srcdir)/%.cc,%,\
 	$(wildcard $(srcdir)/tests/*/*.cc))
 TESTDIRS = $(shell cd $(srcdir)/${<D} ; echo *(/))
