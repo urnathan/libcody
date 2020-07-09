@@ -97,7 +97,7 @@ int Client::CommunicateWithServer ()
 
 static Packet CommunicationError (int err)
 {
-  std::string e {"communication error:"};
+  std::string e {u8"communication error:"};
   e.append (strerror (err));
 
   return Packet (Client::PC_ERROR, std::move (e));
@@ -110,32 +110,33 @@ Packet Client::ProcessResponse (std::vector<std::string> &words,
     {
       if (e == EINVAL)
 	{
-	  std::string msg ("malformed string '");
+	  std::string msg (u8"malformed string '");
 	  msg.append (words[0]);
-	  msg.push_back ('\'');
+	  msg.append (u8"'");
 	  return Packet (Client::PC_ERROR, std::move (msg));
 	}
       else
-	return Packet (Client::PC_ERROR, "missing response");
+	return Packet (Client::PC_ERROR, u8"missing response");
     }
 
   Assert (!words.empty ());
-  if (words[0] == "ERROR")
+  if (words[0] == u8"ERROR")
     return Packet (Client::PC_ERROR,
 		  std::move (words.size () == 1 ? words[1]
-			     : "malformed error response"));
+			     : u8"malformed error response"));
 
   if (isLast && !read.IsAtEnd ())
-    return Packet (Client::PC_ERROR, std::string ("unexpected extra response"));
+    return Packet (Client::PC_ERROR,
+		   std::string (u8"unexpected extra response"));
 
   Assert (code < Detail::RC_HWM);
   Packet result (responseTable[code] (words));
   if (result.GetCode () == Client::PC_ERROR && result.GetString ().empty ())
     {
-      std::string msg {"malformed response '"};
+      std::string msg {u8"malformed response '"};
 
       read.LexedLine (msg);
-      msg.push_back ('\'');
+      msg.append (u8"'");
       result.GetString () = std::move (msg);
     }
   else if (result.GetCode () == Client::PC_CONNECT)
@@ -198,7 +199,7 @@ Packet Client::Connect (char const *agent, char const *ident,
 			  size_t alen, size_t ilen)
 {
   write.BeginLine ();
-  write.AppendWord ("HELLO");
+  write.AppendWord (u8"HELLO");
   write.AppendInteger (Version);
   write.AppendWord (agent, true, alen);
   write.AppendWord (ident, true, ilen);
@@ -210,24 +211,24 @@ Packet Client::Connect (char const *agent, char const *ident,
 // HELLO VERSION AGENT
 Packet ConnectResponse (std::vector<std::string> &words)
 {
-  if (words[0] == "HELLO" && words.size () == 3)
+  if (words[0] == u8"HELLO" && words.size () == 3)
     {
       char *eptr;
       unsigned long version = strtoul (words[1].c_str (), &eptr, 10);
       if (*eptr || version < Version)
-	return Packet (Client::PC_ERROR, "incompatible version");
+	return Packet (Client::PC_ERROR, u8"incompatible version");
       else
 	return Packet (Client::PC_CONNECT, version);
     }
 
-  return Packet (Client::PC_ERROR, "");
+  return Packet (Client::PC_ERROR, u8"");
 }
 
 // MODULE-REPO
 Packet Client::ModuleRepo ()
 {
   write.BeginLine ();
-  write.AppendWord ("MODULE-REPO");
+  write.AppendWord (u8"MODULE-REPO");
   write.EndLine ();
 
   return MaybeRequest (Detail::RC_MODULE_REPO);
@@ -236,12 +237,12 @@ Packet Client::ModuleRepo ()
 // MODULE-REPO $dir
 Packet ModuleRepoResponse (std::vector<std::string> &words)
 {
-  if (words[0] == "MODULE-REPO" && words.size () == 2)
+  if (words[0] == u8"MODULE-REPO" && words.size () == 2)
     {
       return Packet (Client::PC_MODULE_REPO, std::move (words[1]));
     }
 
-  return Packet (Client::PC_ERROR, "");
+  return Packet (Client::PC_ERROR, u8"");
 }
 
 // LTO-COMPILE $args
@@ -261,7 +262,7 @@ Packet Client::LTOCompile (char const *const *argv, size_t argc)
 Packet Client::ModuleExport (char const *module, size_t mlen)
 {
   write.BeginLine ();
-  write.AppendWord ("MODULE-EXPORT");
+  write.AppendWord (u8"MODULE-EXPORT");
   write.AppendWord (module, true, mlen);
   write.EndLine ();
 
@@ -272,7 +273,7 @@ Packet Client::ModuleExport (char const *module, size_t mlen)
 Packet Client::ModuleImport (char const *module, size_t mlen)
 {
   write.BeginLine ();
-  write.AppendWord ("MODULE-IMPORT");
+  write.AppendWord (u8"MODULE-IMPORT");
   write.AppendWord (module, true, mlen);
   write.EndLine ();
 
@@ -282,17 +283,17 @@ Packet Client::ModuleImport (char const *module, size_t mlen)
 // MODULE-CMI $cmifile
 Packet ModuleCMIResponse (std::vector<std::string> &words)
 {
-  if (words[0] == "MODULE-CMI" && words.size () == 2)
+  if (words[0] == u8"MODULE-CMI" && words.size () == 2)
     return Packet (Client::PC_MODULE_CMI, std::move (words[1]));
   else
-    return Packet (Client::PC_ERROR, "");
+    return Packet (Client::PC_ERROR, u8"");
 }
 
 // MODULE-COMPILED $modulename
 Packet Client::ModuleCompiled (char const *module, size_t mlen)
 {
   write.BeginLine ();
-  write.AppendWord ("MODULE-COMPILED");
+  write.AppendWord (u8"MODULE-COMPILED");
   write.AppendWord (module, true, mlen);
   write.EndLine ();
 
@@ -302,16 +303,16 @@ Packet Client::ModuleCompiled (char const *module, size_t mlen)
 // OK
 Packet ModuleCompiledResponse (std::vector<std::string> &words)
 {
-  if (words[0] == "OK")
+  if (words[0] == u8"OK")
     return Packet (Client::PC_MODULE_COMPILED, 0);
   else
-    return Packet (Client::PC_ERROR, "");
+    return Packet (Client::PC_ERROR, u8"");
 }
 
 Packet Client::IncludeTranslate (char const *include, size_t ilen)
 {
   write.BeginLine ();
-  write.AppendWord ("INCLUDE-TRANSLATE");
+  write.AppendWord (u8"INCLUDE-TRANSLATE");
   write.AppendWord (include, true, ilen);
   write.EndLine ();
 
@@ -323,9 +324,9 @@ Packet Client::IncludeTranslate (char const *include, size_t ilen)
 // MODULE-CMI $cmifile
 Packet IncludeTranslateResponse (std::vector<std::string> &words)
 {
-  if (words[0] == "INCLUDE-TEXT" && words.size () == 1)
+  if (words[0] == u8"INCLUDE-TEXT" && words.size () == 1)
     return Packet (Client::PC_INCLUDE_TRANSLATE, 0);
-  else if (words[0] == "INCLUDE-IMPORT" && words.size () == 1)
+  else if (words[0] == u8"INCLUDE-IMPORT" && words.size () == 1)
     return Packet (Client::PC_INCLUDE_TRANSLATE, 1);
   else
     return ModuleCMIResponse (words);

@@ -82,20 +82,20 @@ following meanings:
 
 * \\n - NEWLINE (0xa)
 * \\t - TAB (0x9)
-* \\_ - SPACE ( )
 * \\' - APOSTROPHE (')
 * \\\\ - BACKSLASH (\\)
 
 Characters in the range [0x00, 0x20) and 0x7f are encoded with one or
 two lowercase hex characters.  Octets in the range [0x80,0xff) are
-UTF8 encodings and passed as such.
+UTF8 encodings of unicode characters outside the traditional ASCII set
+and passed as such.
 
 Decoding should be more relaxed.  Unquoted words containing characters
 in the range [0x20,0xff] other than BACKSLASH or APOSTROPHE should be
 accepted.  In a quoted sequence, `\` followed by one or two lower case
 hex characters decode to that octet.  Further, words can be
 constructed from a mixture of abutted quoted and unquoted sequences.
-For instance `FOO'\_'bar` would decode to the word `FOO bar`.
+For instance `FOO' 'bar` would decode to the word `FOO bar`.
 
 Notice that the block continuation marker of `;` is not a valid
 encoding of the word `;`, which would be `';'`.
@@ -278,12 +278,23 @@ The following configure options are available, in addition to the usual set:
   you're providing libcody as part of a package that /you/ are
   supporting.
 
+* `--enable-maintainer-mode` Specify that rules to rebuild things like
+  `configure` (with `autoconf`) should be enabled.  When not enabled,
+  you'll get a message if these appear out of date, but that can
+  happen naturally after an update or clone as `git`, in common with
+  other VCs, doesn't preserve the relative ordering of file
+  modifications.  You can use `make MAINTAINER=touch` to shut make up,
+  if this occurs (or manually execute the `autoconf` and related
+  commands).
+
 When building, you can override the default optimization flags with
 `CXXFLAGS=$flags`.  I often build a debuggable library with `make
 CXXFLAGS=-g3`.
 
 The makefile will also parallelize according to the number of CPUs,
-unless you specify explicitly with a `-j` option.
+unless you specify explicitly with a `-j` option.  This is a little
+clunky, as it's not possible to figure out inside the makefile whether
+the user provided `-j`.  (Or at least I've not figured out how.)
 
 ## API
 
@@ -376,13 +387,18 @@ Cody::Client *MakeClient ()
   the compiler have the same working directory.  Perhaps that should
   be addressed.
 
-* Include path canonization and/or header file lookup
+* Include path canonization and/or header file lookup.  This can be
+  expensive, particularly with many `-I` options, due to the system
+  calls.  Perhaps using a common resource would be cheaper?
 
-* Generated header file lookup/construction
+* Generated header file lookup/construction.  This is essentially the
+  same problem as importing a module, and build systems are crap at
+  dealing with this.
 
-* Link-time compilations
+* Link-time compilations.  Another place the compiler would like to
+  ask the build system to do things.
 
-* C++20 entrypoints &mdash; std:string_view would be nice
+* C++20 API entrypoints &mdash; std:string_view would be nice
 
 * Exception-safety audit.  Exceptions are not used, but memory
   exhaustion could happen.  And perhaps user's resolver code employs

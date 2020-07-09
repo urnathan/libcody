@@ -26,6 +26,15 @@ constexpr unsigned Version = 1;
 
 namespace Detail  {
 
+// C++11 doesn't have utf8 character literals :(
+
+template<unsigned I>
+constexpr char S2C (char const (&s)[I])
+{
+  static_assert (I == 2, "only single octet strings may be converted");
+  return s[0];
+}
+
 /// Internal buffering class.  Used to concatenate outgoing messages
 /// and Lex incoming ones.
 class MessageBuffer
@@ -46,7 +55,7 @@ public:
   /// the buffer.  Use before a sequence of Write calls.
   void PrepareToWrite ()
   {
-    buffer.push_back ('\n');
+    buffer.push_back (u8"\n"[0]);
     lastBol = 0;
   }
   ///
@@ -82,7 +91,7 @@ public:
   /// Add whitespace word separator.  Multiple adjacent whitespace is fine.
   void Space ()
   {
-    Append (' ');
+    Append (Detail::S2C(u8" "));
   }
 
 public:

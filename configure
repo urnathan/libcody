@@ -599,6 +599,7 @@ CPPFLAGS
 LDFLAGS
 CXXFLAGS
 CXX
+MAINTAINER
 NUM_CPUS
 toolbin
 host_os
@@ -651,6 +652,7 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 with_toolbin
+enable_maintainer_mode
 with_compiler
 with_toollib
 with_toolinc
@@ -1279,6 +1281,9 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-maintainer-mode
+                          enable maintainer mode. Add rules to rebuild
+                          configurey bits
   --enable-checking       enable run-time checking
 
 Optional Packages:
@@ -1838,6 +1843,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+
+
 ac_aux_dir=
 for ac_dir in build-aux "$srcdir"/build-aux; do
   if test -f "$ac_dir/install-sh"; then
@@ -1973,6 +1980,24 @@ test "$NUM_CPUS" = 0 && NUM_CPUS=
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${NUM_CPUS:-unknown}" >&5
 $as_echo "${NUM_CPUS:-unknown}" >&6; }
 test "$NUM_CPUS" = 1 && NUM_CPUS=
+
+# Check whether --enable-maintainer-mode was given.
+if test "${enable_maintainer_mode+set}" = set; then :
+  enableval=$enable_maintainer_mode;
+else
+  enable_maintainer_mode=no
+fi
+
+case "$enable_maintainer_mode" in
+  ("yes") maintainer_mode=yes ;;
+  ("no") maintainer=no ;;
+  (*) as_fn_error $? "unknown maintainer mode $enable_maintainer_mode" "$LINENO" 5 ;;
+esac
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking maintainer-mode" >&5
+$as_echo_n "checking maintainer-mode... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $maintainer_mode" >&5
+$as_echo "$maintainer_mode" >&6; }
+test "$maintainer_mode" = yes && MAINTAINER=yes
 
 
 # Check whether --with-compiler was given.

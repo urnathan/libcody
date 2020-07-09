@@ -83,6 +83,21 @@ AC_MSG_RESULT([${NUM_CPUS:-unknown}])
 test "$NUM_CPUS" = 1 && NUM_CPUS=
 AC_SUBST(NUM_CPUS)])
 
+AC_DEFUN([CODY_MAINTAINER_MODE],
+[AC_ARG_ENABLE([maintainer-mode],
+AS_HELP_STRING([--enable-maintainer-mode],
+[enable maintainer mode.  Add rules to rebuild configurey bits]),,
+[enable_maintainer_mode=no])
+case "$enable_maintainer_mode" in
+  ("yes") maintainer_mode=yes ;;
+  ("no") maintainer=no ;;
+  (*) AC_MSG_ERROR([unknown maintainer mode $enable_maintainer_mode]) ;;
+esac
+AC_MSG_CHECKING([maintainer-mode])
+AC_MSG_RESULT([$maintainer_mode])
+test "$maintainer_mode" = yes && MAINTAINER=yes
+AC_SUBST(MAINTAINER)])
+
 AC_DEFUN([CODY_CXX_COMPILER],
 [AC_ARG_WITH([compiler],
 AS_HELP_STRING([--with-compiler=NAME],[which compiler to use]),

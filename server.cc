@@ -36,18 +36,19 @@ static std::tuple<char const *,
   const requestTable[Detail::RC_HWM] =
   {
     // Same order as enum RequestCode
-    {"HELLO", nullptr},
-    {"MODULE-REPO", ModuleRepoRequest},
-    {"MODULE-EXPORT", ModuleExportRequest},
-    {"MODULE-IMPORT", ModuleImportRequest},
-    {"MODULE-COMPILED", ModuleCompiledRequest},
-    {"INCLUDE-TRANSLATE", IncludeTranslateRequest},
-    {"LTO-COMPILE", LTOCompileRequest},
+    {u8"HELLO", nullptr},
+    {u8"MODULE-REPO", ModuleRepoRequest},
+    {u8"MODULE-EXPORT", ModuleExportRequest},
+    {u8"MODULE-IMPORT", ModuleImportRequest},
+    {u8"MODULE-COMPILED", ModuleCompiledRequest},
+    {u8"INCLUDE-TRANSLATE", IncludeTranslateRequest},
+    {u8"LTO-COMPILE", LTOCompileRequest},
   };
 
 Server::Server (Resolver *r)
   : resolver (r), direction (READING)
 {
+  PrepareToRead ();
 }
 
 Server::Server (Server &&src)
@@ -134,21 +135,21 @@ void Server::ProcessRequests (void)
 	  std::string msg;
 
 	  if (err > 0)
-	    msg = "error processing '";
+	    msg = u8"error processing '";
 	  else if (ix >= Detail::RC_HWM)
-	    msg = "unrecognized '";
+	    msg = u8"unrecognized '";
 	  else if (IsConnected () && ix == Detail::RC_CONNECT)
-	    msg = "already connected '";
+	    msg = u8"already connected '";
 	  else if (!IsConnected () && ix != Detail::RC_CONNECT)
-	    msg = "not connected '";
+	    msg = u8"not connected '";
 	  else
-	    msg = "malformed '";
+	    msg = u8"malformed '";
 
 	  read.LexedLine (msg);
-	  msg.push_back ('\'');
+	  msg.append (u8"'");
 	  if (err > 0)
 	    {
-	      msg.push_back (' ');
+	      msg.append (u8" ");
 	      msg.append (strerror (err));
 	    }
 	  resolver->ErrorResponse (this, std::move (msg));
@@ -163,7 +164,7 @@ Resolver *ConnectRequest (Server *s, Resolver *r,
     return nullptr;
 
   if (words.size () == 3)
-    words.emplace_back ("");
+    words.emplace_back (u8"");
   char *eptr;
   unsigned long version = strtoul (words[1].c_str (), &eptr, 10);
   if (*eptr)
@@ -226,7 +227,7 @@ int LTOCompileRequest (Server *s, Resolver *r,
 void Server::ErrorResponse (char const *error, size_t elen)
 {
   write.BeginLine ();
-  write.AppendWord ("ERROR");
+  write.AppendWord (u8"ERROR");
   write.AppendWord (error, true, elen);
   write.EndLine ();
 }
@@ -234,7 +235,7 @@ void Server::ErrorResponse (char const *error, size_t elen)
 void Server::OKResponse ()
 {
   write.BeginLine ();
-  write.AppendWord ("OK");
+  write.AppendWord (u8"OK");
   write.EndLine ();
 }
 
@@ -243,7 +244,7 @@ void Server::ConnectResponse (char const *agent, size_t alen)
   is_connected = true;
 
   write.BeginLine ();
-  write.AppendWord ("HELLO");
+  write.AppendWord (u8"HELLO");
   write.AppendInteger (Version);
   write.AppendWord (agent, true, alen);
   write.EndLine ();
@@ -252,7 +253,7 @@ void Server::ConnectResponse (char const *agent, size_t alen)
 void Server::ModuleRepoResponse (char const *repo, size_t rlen)
 {
   write.BeginLine ();
-  write.AppendWord ("MODULE-REPO");
+  write.AppendWord (u8"MODULE-REPO");
   write.AppendWord (repo, true, rlen);
   write.EndLine ();
 }
@@ -260,7 +261,7 @@ void Server::ModuleRepoResponse (char const *repo, size_t rlen)
 void Server::ModuleCMIResponse (char const *cmi, size_t clen)
 {
   write.BeginLine ();
-  write.AppendWord ("MODULE-CMI");
+  write.AppendWord (u8"MODULE-CMI");
   write.AppendWord (cmi, true, clen);
   write.EndLine ();
 }
@@ -268,7 +269,7 @@ void Server::ModuleCMIResponse (char const *cmi, size_t clen)
 void Server::IncludeTranslateResponse (bool translate)
 {
   write.BeginLine ();
-  write.AppendWord (translate ? "INCLUDE-IMPORT" : "INCLUDE-TEXT");
+  write.AppendWord (translate ? u8"INCLUDE-IMPORT" : u8"INCLUDE-TEXT");
   write.EndLine ();
 }
 
