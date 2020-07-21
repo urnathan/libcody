@@ -3002,7 +3002,7 @@ $as_echo "no" >&6; }
 fi
 
   if test "x$ac_ct_ALOY" = x; then
-    ALOY=": NOTaloy"
+    ALOY=": Joust testsuite missing"
   else
     case $cross_compiling:$ac_tool_warned in
 yes:)

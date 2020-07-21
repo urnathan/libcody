@@ -5,7 +5,9 @@ I guess I should document this, it might not be obvious.
 libcody is implemented in C++11.  Because it's used in compiler
 development, we can't use the latest and greatest.
 
-## Extensions
+The formatting is close to GNU, but with a few differences.
+
+## Extensions to C++11
 
 It uses __VA_OPT__ when available, falling back on GNU's variadic
 macro `,#` extension.  This is in the `Assert` macro, so one can have
@@ -90,6 +92,8 @@ things that commonly catches programmers unfamiliar with it is:
 
   See below a difference in qualifier placement.
 
+* Code should compile without warnings.
+
 ## Not GNU
 
 ### Names
@@ -102,9 +106,10 @@ member variables.  Block-scope vars can be `dromedaryCase` or
 ### Type qualifiers
 
 Type qualifiers go after the thing they qualify.  You have to do this
-for pointers anyway.  Just being consistent:
+for pointers anyway, and read them inside-out, because, C Just being
+consistent:
 
 ```c++
-int const foo = 5;
-int *const pfoo = nullptr;
+int const foo = 5; // constant int
+int *const pfoo = nullptr;  // constant pointer to int
 ```
