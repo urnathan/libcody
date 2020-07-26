@@ -83,9 +83,9 @@ add_definitions(
  -DREVISION="${CODY_REVISION}"
  )
 if (CODY_CHECKING)
-  add_definitions(-DCODY_CHECKING=1)
+  add_definitions(-DNMS_CHECKING=1)
 else()
-  add_definitions(-DCODY_CHECKING=0)
+  add_definitions(-DNMS_CHECKING=0)
 endif()
 
 set(LIBCODY_SOURCES
