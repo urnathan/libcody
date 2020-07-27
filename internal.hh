@@ -17,7 +17,8 @@
 
 namespace Cody {
 
-#if NMS_CHECKING
+// Location is needed regardless of checking, to make the fatal
+// handler simpler
 class Location
 {
 protected:
@@ -59,7 +60,6 @@ public:
     return line;
   }
 };
-#endif
 
 void HCF [[noreturn]]
 (

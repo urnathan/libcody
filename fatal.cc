@@ -33,7 +33,7 @@ void (HCF) (char const *msg
   __asm__ volatile ("nop");  // HCF - you goofed!
 
 #if !NMS_CHECKING
-  Location loc (nullptr, 0);
+  constexpr Location loc (nullptr, 0);
 #endif
 
   fprintf (stderr, "CODYlib: %s", msg ? msg : "internal error");
