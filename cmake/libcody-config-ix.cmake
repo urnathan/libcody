@@ -1,4 +1,4 @@
-message(STATUS "*top config-ix* CMAKE_SYSTEM : ${CMAKE_SYSTEM}")
+# message(STATUS "*top config-ix* CMAKE_SYSTEM : ${CMAKE_SYSTEM}")
 
 include(CheckIncludeFile)
 include(CheckIncludeFileCXX)

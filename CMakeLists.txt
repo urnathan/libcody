@@ -15,7 +15,7 @@ if( CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR AND NOT MSVC_IDE)
   message(FATAL_ERROR "In-source builds are not allowed. ")
 endif()
 
-message(STATUS "SRC ${CMAKE_SOURCE_DIR} CSRC : ${CMAKE_CURRENT_SOURCE_DIR} ")
+# message(STATUS "SRC ${CMAKE_SOURCE_DIR} CSRC : ${CMAKE_CURRENT_SOURCE_DIR} ")
 
 # Add path for custom modules
 set(CMAKE_MODULE_PATH
