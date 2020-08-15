@@ -103,3 +103,13 @@ if(add_llvm_component_library)
 else()
   add_library(cody STATIC ${LIBCODY_SOURCES})
 endif()
+
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR
+   OR LIBCODY_STANDALONE_BUILD)
+
+  set_target_properties(cody PROPERTIES PUBLIC_HEADER "cody-conf.h;cody.hh")
+  install(TARGETS cody 
+        LIBRARY DESTINATION lib
+        PUBLIC_HEADER DESTINATION include
+  )
+endif()
