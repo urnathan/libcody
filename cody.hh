@@ -326,6 +326,7 @@ public:
     PC_MODULE_CMI,	///< Packet is string CMI file
     PC_MODULE_COMPILED, ///< Module compilation ack
     PC_INCLUDE_TRANSLATE, ///< Packet is boolean, true for module
+    PC_LTO_COMPILED, ///< LTO compilation message
   };
 
 private:
@@ -687,8 +688,16 @@ public:
   void IncludeTranslateResponse (bool xlate);
 
 public:
-  // TODO: success code?
-  void LTOResponse ();
+
+  /// Send back lto compilation status .
+  /// @param message the message of the status
+  /// @param mlen length of message, if known
+  void LTOResponse (char const *message, size_t mlen = ~size_t (0));
+  void LTOResponse (std::string const &message)
+  {
+    LTOResponse (message.data (), message.size ());
+  }
+
 
 public:
   /// Write message block to client.  Semantics as for

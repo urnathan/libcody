@@ -275,10 +275,11 @@ void Server::IncludeTranslateResponse (bool translate)
   write.EndLine ();
 }
 
-void Server::LTOResponse ()
+void Server::LTOResponse (char const *message, size_t mlen)
 {
   write.BeginLine ();
-  write.AppendWord ("LTO-RESPONSE");
+  write.AppendWord (u8"LTO-RESPONSE");
+  write.AppendWord (message, true, mlen);
   write.EndLine ();
 }
 
