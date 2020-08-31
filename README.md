@@ -254,11 +254,9 @@ These set of messages are used for GCC LTO jobserver integration with GNU Make
 
 #### Invoke Command
 
-All relative CMI file names are relative to a repository.  (There are
-usually no abosolute CMI files).  The respository may be determined
-with:
+A command can be invoked with the follow message:
 
-`INVOKE`
+`INVOKE $argv`
 
 The expected response is:
 
