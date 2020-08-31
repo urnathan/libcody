@@ -578,9 +578,11 @@ public:
   enum Direction
   {
     READING,  // Server is waiting for completion of a (set of)
-	      // requests from client.
+	      // requests from client.  The next state will be PROCESSING.
     WRITING,  // Server is writing a (set of) responses to client.
-    PROCESSING  // Server is processing client request(s).
+	      // The next state will be READING.
+    PROCESSING  // Server is processing client request(s).  The next
+		// state will be WRITING.
   };
 
 private:
