@@ -577,7 +577,7 @@ public:
 class Server
 {
 public:
-  enum Direction {READING, WRITING, PROCESSING};
+  enum Direction {READING, WRITING, PROCESSING, STALLED};
 
 private:
   Detail::MessageBuffer write;
@@ -603,6 +603,12 @@ public:
   bool IsConnected () const
   {
     return is_connected;
+  }
+
+public:
+  void SetDirection (Direction d)
+  {
+    direction = d;
   }
 
 public:
