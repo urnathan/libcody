@@ -571,12 +571,17 @@ public:
 /// to a client.  It has 3 states, READING:accumulating a message
 /// block froma client, WRITING:writing a message block to a client
 /// and PROCESSING:resolving requests.  If the server does not spawn
-/// jobs to build needed artifacts, the PROCESSING state will never be
-/// transitory.
+/// jobs to build needed artifacts, the PROCESSING state will be brief.
 class Server
 {
 public:
-  enum Direction {READING, WRITING, PROCESSING};
+  enum Direction
+  {
+    READING,  // Server is waiting for completion of a (set of)
+	      // requests from client.
+    WRITING,  // Server is writing a (set of) responses to client.
+    PROCESSING  // Server is processing client request(s).
+  };
 
 private:
   Detail::MessageBuffer write;
