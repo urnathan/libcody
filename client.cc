@@ -240,9 +240,7 @@ Packet Client::ModuleRepo ()
 Packet ModuleRepoResponse (std::vector<std::string> &words)
 {
   if (words[0] == u8"MODULE-REPO" && words.size () == 2)
-    {
-      return Packet (Client::PC_MODULE_REPO, std::move (words[1]));
-    }
+    return Packet (Client::PC_MODULE_REPO, std::move (words[1]));
 
   return Packet (Client::PC_ERROR, u8"");
 }
@@ -254,7 +252,7 @@ Packet Client::InvokeSubProcess (char const *const *argv, size_t argc)
   write.AppendWord (u8"INVOKE");
 
   for(size_t i = 0; i < argc; i++) 
-      write.AppendWord (argv[i]);
+    write.AppendWord (argv[i]);
 
   write.EndLine ();
   return MaybeRequest (Detail::RC_INVOKE);
@@ -263,12 +261,10 @@ Packet Client::InvokeSubProcess (char const *const *argv, size_t argc)
 // INVOKED $message
 Packet InvokedResponse (std::vector<std::string> &words)
 {
-  if (words[0] == u8"INVOKED") {
+  if (words[0] == u8"INVOKED")
     return Packet (Client::PC_INVOKED, std::move (words[1]));
-  }
-  else {
+  else
     return Packet (Client::PC_ERROR, u8"");
-  }
 }
 
 // MODULE-EXPORT $modulename
