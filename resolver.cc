@@ -180,7 +180,7 @@ int Resolver::IncludeTranslateRequest (Server *s, std::string &include)
   return 0;
 }
 
-int Resolver::LTOCompileRequest (Server *s, std::vector<std::string> &)
+int Resolver::InvokeSubProcessRequest (Server *s, std::vector<std::string> &)
 {
   s->ErrorResponse ("unimplemented");
   return 0;

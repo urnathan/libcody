@@ -248,6 +248,23 @@ response also indicates include translation should occur, and provides
 the name of the CMI to read, this possibly elides a subsequent
 `MODULE-IMPORT` request.
 
+### GCC LTO Messages
+
+These set of messages are used for GCC LTO jobserver integration with GNU Make
+
+#### Invoke Command
+
+A command can be invoked with the follow message:
+
+`INVOKE $argv`
+
+The expected response is:
+
+`INVOKED $status`
+
+The `$status` currently just returns a string `success` or `failed`. 
+A successful invocation of the command is indicated with a return `success`.
+
 ## Building libCody
 
 Libcody is written in C++11.  (It's a intended for compilers, so

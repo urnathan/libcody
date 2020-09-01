@@ -18,6 +18,7 @@ static Packet ModuleRepoResponse (std::vector<std::string> &words);
 static Packet ModuleCMIResponse (std::vector<std::string> &words);
 static Packet ModuleCompiledResponse (std::vector<std::string> &words);
 static Packet IncludeTranslateResponse (std::vector<std::string> &words);
+static Packet InvokedResponse (std::vector<std::string> &words);
 
 // Must be consistently ordered with the RequestCode enum
 static Packet (*const responseTable[Detail::RC_HWM])
@@ -29,6 +30,7 @@ static Packet (*const responseTable[Detail::RC_HWM])
     &ModuleCMIResponse,
     &ModuleCompiledResponse,
     &IncludeTranslateResponse,
+    &InvokedResponse,
   };
 
 Client::Client ()
@@ -245,17 +247,28 @@ Packet ModuleRepoResponse (std::vector<std::string> &words)
   return Packet (Client::PC_ERROR, u8"");
 }
 
-// LTO-COMPILE $args
-Packet Client::LTOCompile (char const *const *argv, size_t argc)
+// INVOKE $args
+Packet Client::InvokeSubProcess (char const *const *argv, size_t argc)
 {
   write.BeginLine ();
-  write.AppendWord ("LTO-COMPILE");
+  write.AppendWord (u8"INVOKE");
 
   for(size_t i = 0; i < argc; i++) 
       write.AppendWord (argv[i]);
 
   write.EndLine ();
-  return MaybeRequest (Detail::RC_LTO_COMPILE);
+  return MaybeRequest (Detail::RC_INVOKE);
+}
+
+// INVOKED $message
+Packet InvokedResponse (std::vector<std::string> &words)
+{
+  if (words[0] == u8"INVOKED") {
+    return Packet (Client::PC_INVOKED, std::move (words[1]));
+  }
+  else {
+    return Packet (Client::PC_ERROR, u8"");
+  }
 }
 
 // MODULE-EXPORT $modulename

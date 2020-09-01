@@ -179,7 +179,7 @@ enum RequestCode
   RC_MODULE_IMPORT,
   RC_MODULE_COMPILED,
   RC_INCLUDE_TRANSLATE,
-  RC_LTO_COMPILE,
+  RC_INVOKE,
   RC_HWM
 };
 
@@ -326,6 +326,7 @@ public:
     PC_MODULE_CMI,	///< Packet is string CMI file
     PC_MODULE_COMPILED, ///< Module compilation ack
     PC_INCLUDE_TRANSLATE, ///< Packet is boolean, true for module
+    PC_INVOKED, ///< Command message
   };
 
 private:
@@ -423,14 +424,14 @@ public:
   }
 
 public:
-  /// LTO compile
-  /// @param str compile args
-  /// TODO: @result packet std error output
-  Packet LTOCompile (char const *const *argv, size_t argc);
+  /// Invoke a sub process
+  /// @param str command args
+  /// @result packet indicating success or error of command
+  Packet InvokeSubProcess (char const *const *argv, size_t argc);
 
-  Packet LTOCompile (std::vector<const char *> &args) 
+  Packet InvokeSubProcess (std::vector<const char *> &args)
   {
-    return LTOCompile (args.data (), args.size ());
+    return InvokeSubProcess (args.data (), args.size ());
   }
 
 public:
@@ -563,7 +564,7 @@ public:
   virtual int IncludeTranslateRequest (Server *s, std::string &include);
 
 public:
-  virtual int LTOCompileRequest (Server *s, std::vector<std::string> &args);
+  virtual int InvokeSubProcessRequest (Server *s, std::vector<std::string> &args);
 };
 
 
@@ -609,6 +610,12 @@ public:
   bool IsConnected () const
   {
     return is_connected;
+  }
+
+public:
+  void SetDirection (Direction d)
+  {
+    direction = d;
   }
 
 public:
@@ -694,8 +701,16 @@ public:
   void IncludeTranslateResponse (bool xlate);
 
 public:
-  // TODO: success code?
-  void LTOResponse ();
+
+  /// Send back invoked command status .
+  /// @param message the message of the status
+  /// @param mlen length of message, if known
+  void InvokedResponse (char const *message, size_t mlen = ~size_t (0));
+  void InvokedResponse (std::string const &message)
+  {
+    InvokedResponse (message.data (), message.size ());
+  }
+
 
 public:
   /// Write message block to client.  Semantics as for
