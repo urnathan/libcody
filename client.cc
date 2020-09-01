@@ -124,7 +124,7 @@ Packet Client::ProcessResponse (std::vector<std::string> &words,
   Assert (!words.empty ());
   if (words[0] == u8"ERROR")
     return Packet (Client::PC_ERROR,
-		  std::move (words.size () == 1 ? words[1]
+		  std::move (words.size () == 2 ? words[1]
 			     : u8"malformed error response"));
 
   if (isLast && !read.IsAtEnd ())
