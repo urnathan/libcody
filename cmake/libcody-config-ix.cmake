@@ -18,6 +18,8 @@ check_cxx_compiler_flag(-fno-enforce-eh-specs LIBCODY_HAS_NOENFORCE)
 check_cxx_compiler_flag(-fno-stack-protector LIBCODY_HAS_NOSTACKPROT)
 check_cxx_compiler_flag(-fno-threadsafe-statics LIBCODY_HAS_NOTHREADSAFESTATICS)
 
+check_cxx_compiler_flag(-Wno-gnu-zero-variadic-macro-arguments LIBCODY_CXX_W_GZVMA)
+
 # Address github issue #10
 if (NOT CODY_WITHEXCEPTIONS)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-rtti")
@@ -36,3 +38,6 @@ endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -W -Wall -Woverloaded-virtual -Wshadow")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-invalid-offsetof -Wno-unused-variable")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-missing-field-initializers")
+if (LIBCODY_CXX_W_GZVMA)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-gnu-zero-variadic-macro-arguments")
+endif ()
