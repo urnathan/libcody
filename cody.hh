@@ -7,18 +7,16 @@
 
 #include "cody-conf.h"
 // C++
-#include <vector>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
 // C
 #include <cstddef>
 // OS
 // FIXME: probably want some goop in cody-conf.h
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#if __APPLE__
-#include <errno.h>
-#endif
 
 namespace Cody {
 
