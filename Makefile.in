@@ -72,7 +72,16 @@ CXXOPTS += -fmessage-length=$(MLEN)
 endif
 CXXOPTS += -fdiagnostics-color=always -fno-diagnostics-show-option
 else
+ifeq ($(notdir $(firstword $(CXX))),clang++)
+CXXOPTS += -fno-stack-protector -fno-threadsafe-statics
+CXXOPTS += -fno-exceptions -fno-rtti
+# Warning options
+CXXOPTS += -W -Wall -Woverloaded-virtual -Wshadow
+CXXOPTS += -Wno-invalid-offsetof -Wno-unused-variable
+CXXOPTS += -Wno-missing-field-initializers
+else
 # Add different compiler's options here
+endif
 endif
 
 # Config
