@@ -68,6 +68,8 @@ set (CMAKE_CXX_STANDARD 11)
 
 message(STATUS "git revision ${CODY_REVISION} ")
 option(CODY_CHECKING "Enable checking" ON)
+# Address github issue #10
+option(CODY_WITHEXCEPTIONS "Enable exceptions" OFF)
 
 include(CTest)
 

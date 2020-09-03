@@ -18,10 +18,14 @@ check_cxx_compiler_flag(-fno-enforce-eh-specs LIBCODY_HAS_NOENFORCE)
 check_cxx_compiler_flag(-fno-stack-protector LIBCODY_HAS_NOSTACKPROT)
 check_cxx_compiler_flag(-fno-threadsafe-statics LIBCODY_HAS_NOTHREADSAFESTATICS)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-rtti")
-if (LIBCODY_HAS_NOENFORCE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-enforce-eh-specs")
+# Address github issue #10
+if (NOT CODY_WITHEXCEPTIONS)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-exceptions -fno-rtti")
+  if (LIBCODY_HAS_NOENFORCE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-enforce-eh-specs")
+  endif()
 endif()
+
 if (LIBCODY_HAS_NOSTACKPROT)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-stack-protector")
 endif()
