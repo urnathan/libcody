@@ -270,7 +270,9 @@ A successful invocation of the command is indicated with a return `success`.
 Libcody is written in C++11.  (It's a intended for compilers, so
 there'd be a boostrapping problem if it used the latest and greatest.)
 
-It uses the usual `configure`, `make`, `make check` & `make install`
+### Using configure and make.
+
+It supports the usual `configure`, `make`, `make check` & `make install`
 sequence.  It does not support building in the source directory --
 that just didn't drop out, and it's not how I build things (because,
 again, for compilers).  Excitingly it uses my own `joust` test
@@ -315,6 +317,44 @@ The `Makefile` will also parallelize according to the number of CPUs,
 unless you specify explicitly with a `-j` option.  This is a little
 clunky, as it's not possible to figure out inside the makefile whether
 the user provided `-j`.  (Or at least I've not figured out how.)
+
+### Using cmake and make
+
+#### In the clang/LLVM project
+
+The primary motivation for a cmake implementation is to allow building
+libcody "in tree" in clang/LLVM.  In that case, a checkout of libcody
+can be placed (or symbolically linked) into clang/tools.  This will
+configure and build the library along with other LLVM dependencies.
+
+*NOTE* This is not treated as an installable entity (it is present only
+for use by the project).
+
+*NOTE* The testing targets would not be appropriate in this configuration;
+it is expected that lit-based testing of the required functionality will be
+done by the code using the library.
+
+#### Stand-alone
+
+For use on platforms that don't support configure & make effectively, it
+is possible to use the cmake & make process in stand-alone mode (similar
+to the configure & make process above).
+
+An example use.
+```
+cmake -DCMAKE_INSTALL_PREFIX=/path/to/installation -DCMAKE_CXX_COMPILER=clang++ /path/to/libcody/source
+make
+make install
+```
+Supported flags (additions to the usual cmake ones).
+
+* `-DCODY_CHECKING=ON,OFF`: Compile with assert-like checking. (defaults ON)
+
+* `-DCODY_WITHEXCEPTIONS=ON,OFF`: Compile with C++ exceptions and RTTI enabled.
+(defaults OFF, to be compatible with GCC and LLVM).
+
+*TODO*: At present there is no support for `ctest` integration (this should be
+feasible, provided that `joust` is installed and can be discovered by `cmake`).
 
 ## API
 
