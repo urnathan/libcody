@@ -587,11 +587,9 @@ public:
 		// state will be WRITING.
   };
 
-protected:
+private:
   Detail::MessageBuffer write;
   Detail::MessageBuffer read;
-
-private:
   Resolver *resolver;
   Detail::FD fd;
   bool is_connected = false;
