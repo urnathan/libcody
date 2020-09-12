@@ -2,7 +2,7 @@
 # Copyright (C) 2019-2020 Nathan Sidwell, nathan@acm.org
 # License: Apache v2.0
 
-ifeq (0,$(MAKELEVEL))
+ifeq (0,$(MAKELEVEL)$(SERIAL))
 ifneq (,@toolbin@)
 $(info Prepending @toolbin@ to PATH)
 PATH := @toolbin@:$(PATH)
@@ -56,7 +56,9 @@ ifeq ($(notdir $(firstword $(CXX))),g++)
 # Code generation
 CXXOPTS += -fno-enforce-eh-specs
 CXXOPTS += -fno-stack-protector -fno-threadsafe-statics
+ifneq (@EXCEPTIONS@,yes)
 CXXOPTS += -fno-exceptions -fno-rtti
+endif
 ifeq ($(filter -fdebug-prefix-map=%,$(CXXOPTS)),)
 CXXOPTS += -fdebug-prefix-map=${srcdir}/=
 endif
@@ -74,7 +76,9 @@ CXXOPTS += -fdiagnostics-color=always -fno-diagnostics-show-option
 else
 ifeq ($(notdir $(firstword $(CXX))),clang++)
 CXXOPTS += -fno-stack-protector -fno-threadsafe-statics
+ifneq (@EXCEPTIONS@,yes)
 CXXOPTS += -fno-exceptions -fno-rtti
+endif
 # Warning options
 CXXOPTS += -W -Wall -Woverloaded-virtual -Wshadow
 CXXOPTS += -Wno-invalid-offsetof -Wno-unused-variable
@@ -121,7 +125,7 @@ check:: Makefile $(addprefix check.,$(SUBDIRS))
 
 clean:: Makefile $(addprefix clean.,$(SUBDIRS))
 
-revision.stamp: $(addprefix $(srcdir)/,$(SUBDIRS))
+revision.stamp: $(addprefix $(srcdir)/,. $(SUBDIRS))
 	@revision=$$(git -C $(srcdir) rev-parse HEAD 2>/dev/null) ;\
 	if test -n "$$revision" ;\
 	then revision=git-$$revision ;\
@@ -133,19 +137,21 @@ revision.stamp: $(addprefix $(srcdir)/,$(SUBDIRS))
 	echo $$revision > $@
 
 revision: revision.stamp
-	@cmp -s $< $@ || cp $< $@
+	@cmp -s $< $@ || cp -f $< $@
 
 clean::
-	rm -f revision revision.stamp
+	rm -f revision.stamp revision
 
 distclean:: clean
 	rm -f config.log config.status
 	rm -rf $(SUBDIRS)
 
-$(srcdir)/configure: $(srcdir)/configure.ac $(srcdir)/config.m4
+$(srcdir)/configure: $(srcdir)/configure.ac \
+	  $(patsubst %,$(srcdir)/%/config.m4,. $(SUBDIRS))
 	$(call MAINTAINER,$@,cd $(@D) && autoconf -W all,error)
 
-$(srcdir)/config.h.in: $(srcdir)/configure.ac $(srcdir)/config.m4
+$(srcdir)/config.h.in: $(srcdir)/configure.ac \
+	  $(patsubst %,$(srcdir)/%/config.m4,. $(SUBDIRS))
 	$(call MAINTAINER,$@,cd $(@D) && autoheader -f -W all,error)
 
 config.h: config.status config.h.in

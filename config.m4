@@ -171,6 +171,23 @@ AC_MSG_RESULT([yes 🙂]),
 AC_MSG_RESULT([no 🙁])
 AC_MSG_ERROR([C++20 support is too immature]))])
 
+AC_DEFUN([NMS_EXCEPTIONS],
+[AC_ARG_ENABLE([exceptions],
+AS_HELP_STRING([--enable-exceptions],
+[enable exceptions & rtti]),,
+[enable_exceptions="no"])
+case "$enable_exceptions" in
+  ("yes") nms_exceptions=yes ;;
+  ("no") nms_exceptions=no ;;
+  (*) AC_MSG_ERROR([unknown exceptions $enable_exceptions]) ;;
+esac
+AC_MSG_CHECKING([exceptions])
+AC_MSG_RESULT([$nms_exceptions])
+if test "$nms_exceptions" != no ; then
+  EXCEPTIONS=yes
+fi
+AC_SUBST(EXCEPTIONS)])
+
 AC_DEFUN([NMS_LINK_OPT],
 [AC_MSG_CHECKING([adding $1 to linker])
 ORIG_LDFLAGS="$LDFLAGS"
@@ -196,7 +213,7 @@ AC_MSG_RESULT($BUGURL)
 AC_DEFINE_UNQUOTED(BUGURL,"$BUGURL",[Bug reporting location])])
 
 AC_DEFUN([NMS_DISTRIBUTION],
-[AC_ARG_ENABLE(distribution,
+[AC_ARG_ENABLE([distribution],
 AS_HELP_STRING([--enable-distribution],
 [enable distribution.  Inhibit components that prevent distribution]),,
 [enable_distribution="no"])
