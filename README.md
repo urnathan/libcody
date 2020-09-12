@@ -2,7 +2,7 @@
 
 Copyright (C) 2020 Nathan Sidwell, nathan@acm.org
 
-libCODY is an implementation of a comminication protocol between
+libCODY is an implementation of a communication protocol between
 compilers and build systems.
 
 **WARNING:**  This is preliminary software.
@@ -106,13 +106,37 @@ It is recommended that words are separated by single SPACE characters.
 
 The message descriptions use `$metavariable` examples.
 
-All messages may result in an error response:
+The request messages are specific to a particlar action.  The response
+messages are more generic, describing their value types, but not their
+meaning.  Message consumers need to know the response to decode them.
+Notice the `Packet::GetRequest()` method records in response packates
+what the request being responded to was.  Do not confuse this with the
+`Packet::GetCode ()` method.
+
+### Responses
+
+The simplest response is a single:
+
+`OK`
+
+This indicates the request was successful.
+
+
+An error response is:
 
 `ERROR $message`
 
-The message is a human-readable string.
+The message is a human-readable string.  It indicates failure of the request.
 
-### Handshake
+Pathnames are encoded with:
+
+`PATHNAME $pathname`
+
+Boolean responses use:
+
+`BOOL `(`TRUE`|`FALSE`)
+
+### Handshake Request
 
 The first message is a handshake:
 
@@ -128,19 +152,16 @@ Responses are:
 `HELLO $version $builder`
 
 A successful handshake.  The communication is now connected and other
-messages may be exchanged.
-
-`ERROR $message`
-
-An unsuccesful handshake.  The communication remains unconnected.
+messages may be exchanged.  An ERROR response indicates an unsuccesful
+handshake.  The communication remains unconnected.
 
 There is nothing restricting a handshake to its own message block.  Of
 course, if the handshake fails, subsequent non-handshake messages in
 the block will fail (producing error responses).
 
-### C++ Module Messages
+### C++ Module Requests
 
-A set of messages are specific to C++ modules
+A set of requests are specific to C++ modules
 
 #### Repository
 
@@ -150,11 +171,8 @@ with:
 
 `MODULE-REPO`
 
-The expected response is:
-
-`MODULE-REPO $directory`
-
-The `$directory` may be an empty word, which is equivalent to `.`.
+A PATHNAME response is expected.  The `$pathname` may be an empty
+word, which is equivalent to `.`.
 
 #### Exporting
 
@@ -163,10 +181,8 @@ inform the builder with:
 
 `MODULE-EXPORT $module`
 
-This will result in a response naming the Compiled Module Interface
-file to write:
-
-`MODULE-CMI $cmi`
+This will result in a PATHNAME response naming the Compiled Module Interface
+pathname to write.
 
 The `MODULE-EXPORT` request does not indicate the module has been
 successfully compiled.  At most one `MODULE-EXPORT` is to be made, and
@@ -204,14 +220,12 @@ FIXME: do we need the module here?
 request.  This indicates the CMI file has been written to disk, so
 that any other compilations waiting on it may proceed.  Depending on
 compiler implementation, the CMI may be written before the compilation
-completes.  A single response:
+completes.  A single OK response is expected.
 
-`OK`
-
-is expected.  Compilation failure can be inferred by lack of a
-`MODULE-COMPILED` request.  It is presumed the builder can determine
-this, as it is also responsible for launching and reaping the compiler
-invocations themselves.
+Compilation failure can be inferred by lack of a `MODULE-COMPILED`
+request.  It is presumed the builder can determine this, as it is also
+responsible for launching and reaping the compiler invocations
+themselves.
 
 #### Importing
 
@@ -219,12 +233,11 @@ Importation, inculding that of header-units, uses:
 
 `MODULE-IMPORT $module`
 
-This responds with a `MODULE-CMI` of the same form as the
-`MODULE-EXPORT` request's response.  Should the builder have to invoke
-a compilation to produce the CMI, the response should be delayed until
-that occurs.  If such a compilation fails, an error response should be
-provided to the requestor &mdash; which will then presumably fail in
-some manner.
+A PATHNAME response names the CMI file to be read.  Should the builder
+have to invoke a compilation to produce the CMI, the response should
+be delayed until that occurs.  If such a compilation fails, an error
+response should be provided to the requestor &mdash; which will then
+presumably fail in some manner.
 
 #### Include Translation
 
@@ -233,37 +246,27 @@ Include translation can be determined with:
 `INCLUDE-TRANSLATE $header`
 
 The header name, `$header`, is the fully resolved header name, in the
-above-mentioned unambigous filename form.  The response will be:
-
-`INCLUDE-TEXT`
-
-to indicate include translation should not occur (the usual textual
-inclusion occurs).  Or:
-
-`INCLUDE-IMPORT`
-
-to indicate the include directive should be replaced by an import
-declaration of the resolved header-unit.  Finally `MODULE-CMI`
-response also indicates include translation should occur, and provides
-the name of the CMI to read, this possibly elides a subsequent
+above-mentioned unambigous filename form.  The response will either be
+a BOOL response indicating translation (TRUE) or textual inclusion
+(FALSE).  Alternatively a PATHNAME response can directly name the CMI,
+and implies translation, this possibly elides a subsequent
 `MODULE-IMPORT` request.
 
 ### GCC LTO Messages
 
-These set of messages are used for GCC LTO jobserver integration with GNU Make
+These set of requests are used for GCC LTO jobserver integration with GNU Make
 
 #### Invoke Command
 
 A command can be invoked with the follow message:
 
-`INVOKE $argv`
+`INVOKE $args`
 
-The expected response is:
+A successful invocation provides an OK response.  A failed
+invocation's produces an ERROR response.
 
-`INVOKED $status`
-
-The `$status` currently just returns a string `success` or `failed`. 
-A successful invocation of the command is indicated with a return `success`.
+FIXME: Note for generalization this command needs to indicate which
+files may need transfering to and from a remote build system.
 
 ## Building libCody
 

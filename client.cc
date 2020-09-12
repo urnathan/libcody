@@ -14,23 +14,21 @@ namespace Cody {
 
 // These do not need to be members
 static Packet ConnectResponse (std::vector<std::string> &words);
-static Packet ModuleRepoResponse (std::vector<std::string> &words);
-static Packet ModuleCMIResponse (std::vector<std::string> &words);
-static Packet ModuleCompiledResponse (std::vector<std::string> &words);
+static Packet PathnameResponse (std::vector<std::string> &words);
+static Packet OKResponse (std::vector<std::string> &words);
 static Packet IncludeTranslateResponse (std::vector<std::string> &words);
-static Packet InvokedResponse (std::vector<std::string> &words);
 
 // Must be consistently ordered with the RequestCode enum
 static Packet (*const responseTable[Detail::RC_HWM])
   (std::vector<std::string> &) =
   {
     &ConnectResponse,
-    &ModuleRepoResponse,
-    &ModuleCMIResponse,
-    &ModuleCMIResponse,
-    &ModuleCompiledResponse,
+    &PathnameResponse,
+    &PathnameResponse,
+    &PathnameResponse,
+    &OKResponse,
     &IncludeTranslateResponse,
-    &InvokedResponse,
+    &OKResponse,
   };
 
 Client::Client ()
@@ -133,6 +131,7 @@ Packet Client::ProcessResponse (std::vector<std::string> &words,
 
   Assert (code < Detail::RC_HWM);
   Packet result (responseTable[code] (words));
+  result.SetRequest (code);
   if (result.GetCode () == Client::PC_ERROR && result.GetString ().empty ())
     {
       std::string msg {u8"malformed response '"};
@@ -236,11 +235,11 @@ Packet Client::ModuleRepo ()
   return MaybeRequest (Detail::RC_MODULE_REPO);
 }
 
-// MODULE-REPO $dir
-Packet ModuleRepoResponse (std::vector<std::string> &words)
+// PATHNAME $dir | ERROR
+Packet PathnameResponse (std::vector<std::string> &words)
 {
-  if (words[0] == u8"MODULE-REPO" && words.size () == 2)
-    return Packet (Client::PC_MODULE_REPO, std::move (words[1]));
+  if (words[0] == u8"PATHNAME" && words.size () == 2)
+    return Packet (Client::PC_PATHNAME, std::move (words[1]));
 
   return Packet (Client::PC_ERROR, u8"");
 }
@@ -258,13 +257,14 @@ Packet Client::InvokeSubProcess (char const *const *argv, size_t argc)
   return MaybeRequest (Detail::RC_INVOKE);
 }
 
-// INVOKED $message
-Packet InvokedResponse (std::vector<std::string> &words)
+// OK or ERROR
+Packet OKResponse (std::vector<std::string> &words)
 {
-  if (words[0] == u8"INVOKED")
-    return Packet (Client::PC_INVOKED, std::move (words[1]));
+  if (words[0] == u8"OK")
+    return Packet (Client::PC_OK);
   else
-    return Packet (Client::PC_ERROR, u8"");
+    return Packet (Client::PC_ERROR,
+		   words.size () == 2 ? std::move (words[1]) : "");
 }
 
 // MODULE-EXPORT $modulename
@@ -289,15 +289,6 @@ Packet Client::ModuleImport (char const *module, size_t mlen)
   return MaybeRequest (Detail::RC_MODULE_IMPORT);
 }
 
-// MODULE-CMI $cmifile
-Packet ModuleCMIResponse (std::vector<std::string> &words)
-{
-  if (words[0] == u8"MODULE-CMI" && words.size () == 2)
-    return Packet (Client::PC_MODULE_CMI, std::move (words[1]));
-  else
-    return Packet (Client::PC_ERROR, u8"");
-}
-
 // MODULE-COMPILED $modulename
 Packet Client::ModuleCompiled (char const *module, size_t mlen)
 {
@@ -307,15 +298,6 @@ Packet Client::ModuleCompiled (char const *module, size_t mlen)
   write.EndLine ();
 
   return MaybeRequest (Detail::RC_MODULE_COMPILED);
-}
-
-// OK
-Packet ModuleCompiledResponse (std::vector<std::string> &words)
-{
-  if (words[0] == u8"OK")
-    return Packet (Client::PC_MODULE_COMPILED, 0);
-  else
-    return Packet (Client::PC_ERROR, u8"");
 }
 
 Packet Client::IncludeTranslate (char const *include, size_t ilen)
@@ -328,17 +310,21 @@ Packet Client::IncludeTranslate (char const *include, size_t ilen)
   return MaybeRequest (Detail::RC_INCLUDE_TRANSLATE);
 }
 
-// INCLUDE-TEXT
-// INCLUDE-IMPORT
-// MODULE-CMI $cmifile
+// BOOL $truthiness
+// PATHNAME $cmifile
 Packet IncludeTranslateResponse (std::vector<std::string> &words)
 {
-  if (words[0] == u8"INCLUDE-TEXT" && words.size () == 1)
-    return Packet (Client::PC_INCLUDE_TRANSLATE, 0);
-  else if (words[0] == u8"INCLUDE-IMPORT" && words.size () == 1)
-    return Packet (Client::PC_INCLUDE_TRANSLATE, 1);
+  if (words[0] == u8"BOOL" && words.size () == 2)
+    {
+      if (words[1] == u8"FALSE")
+	return Packet (Client::PC_BOOL, 0);
+      else if (words[1] == u8"TRUE")
+	return Packet (Client::PC_BOOL, 1);
+      else
+	return Packet (Client::PC_ERROR, u8"");
+    }
   else
-    return ModuleCMIResponse (words);
+    return PathnameResponse (words);
 }
 
 }

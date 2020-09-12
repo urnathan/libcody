@@ -171,7 +171,7 @@ AC_MSG_RESULT([yes 🙂]),
 AC_MSG_RESULT([no 🙁])
 AC_MSG_ERROR([C++20 support is too immature]))])
 
-AC_DEFUN([NMS_EXCEPTIONS],
+AC_DEFUN([NMS_ENABLE_EXCEPTIONS],
 [AC_ARG_ENABLE([exceptions],
 AS_HELP_STRING([--enable-exceptions],
 [enable exceptions & rtti]),,

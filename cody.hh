@@ -215,7 +215,8 @@ private:
   Category cat : 2;  ///< Discriminatory
 
 private:
-  unsigned code = 0;  ///< Packet type
+  unsigned short code = 0;  ///< Packet type
+  unsigned short request = 0;
 
 public:
   Packet (unsigned c, size_t i = 0)
@@ -268,6 +269,16 @@ public:
   unsigned GetCode () const
   {
     return code;
+  }
+  ///
+  /// Return the packet type
+  unsigned GetRequest () const
+  {
+    return request;
+  }
+  void SetRequest (unsigned r)
+  {
+    request = r;
   }
   ///
   /// Return the category of the packet's payload
@@ -323,11 +334,9 @@ public:
     PC_CORKED,		///< Messages are corked
     PC_CONNECT,		///< Packet is integer version
     PC_ERROR,		///< Packet is error string
-    PC_MODULE_REPO,	///< Packet, if non-empty, is repo string
-    PC_MODULE_CMI,	///< Packet is string CMI file
-    PC_MODULE_COMPILED, ///< Module compilation ack
-    PC_INCLUDE_TRANSLATE, ///< Packet is boolean, true for module
-    PC_INVOKED, ///< Command message
+    PC_OK,
+    PC_BOOL,
+    PC_PATHNAME
   };
 
 private:
@@ -663,10 +672,21 @@ public:
   {
     ErrorResponse (error.data (), error.size ());
   }
-  // FIXME: some kind of printf/ostream error variant?
-  ///
+
   /// Accumulate an OK response
   void OKResponse ();
+
+  /// Accumulate a boolean response
+  void BoolResponse (bool);
+
+  /// Accumulate a pathname response
+  /// @param path (may be nullptr, or empty)
+  /// @param rlen length, if known
+  void PathnameResponse (char const *path, size_t plen = ~size_t (0));
+  void PathnameResponse (std::string const &path)
+  {
+    PathnameResponse (path.data (), path.size ());
+  }
 
 public:
   /// Accumulate a (successful) connection response
@@ -677,41 +697,6 @@ public:
   {
     ConnectResponse (agent.data (), agent.size ());
   }
-
-public:
-  /// Accumulate a module repository response
-  /// @param repo repository name (may be nullptr, or empty)
-  /// @param rlen repo length, if known
-  void ModuleRepoResponse (char const *repo, size_t rlen = ~size_t (0));
-  void ModuleRepoResponse (std::string const &repo)
-  {
-    ModuleRepoResponse (repo.data (), repo.size ());
-  }
-
-  /// Accumulate a module CMI response
-  /// @param cmi CMI filename
-  /// @param clen filename length, if known
-  void ModuleCMIResponse (char const *cmi, size_t clen = ~size_t (0));
-  void ModuleCMIResponse (std::string const &cmi)
-  {
-    ModuleCMIResponse (cmi.data (), cmi.size ());
-  }
-
-  /// Accumulate an include translate response
-  /// @param xlate boolean indicating if translation should occur
-  void IncludeTranslateResponse (bool xlate);
-
-public:
-
-  /// Send back invoked command status .
-  /// @param message the message of the status
-  /// @param mlen length of message, if known
-  void InvokedResponse (char const *message, size_t mlen = ~size_t (0));
-  void InvokedResponse (std::string const &message)
-  {
-    InvokedResponse (message.data (), message.size ());
-  }
-
 
 public:
   /// Write message block to client.  Semantics as for

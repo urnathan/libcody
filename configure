@@ -590,6 +590,7 @@ LIBOBJS
 ALOY
 DOXYGEN
 AR
+EXCEPTIONS
 CONFIG_FILES
 SUBDIRS
 configure_args
@@ -658,6 +659,7 @@ enable_maintainer_mode
 with_compiler
 with_bugurl
 enable_checking
+enable_exceptions
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1285,6 +1287,7 @@ Optional Features:
                           enable maintainer mode. Add rules to rebuild
                           configurey bits
   --enable-checking       enable run-time checking
+  --enable-exceptions     enable exceptions & rtti
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -2739,6 +2742,26 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 fi
+# Check whether --enable-exceptions was given.
+if test "${enable_exceptions+set}" = set; then :
+  enableval=$enable_exceptions;
+else
+  enable_exceptions="no"
+fi
+
+case "$enable_exceptions" in
+  ("yes") nms_exceptions=yes ;;
+  ("no") nms_exceptions=no ;;
+  (*) as_fn_error $? "unknown exceptions $enable_exceptions" "$LINENO" 5 ;;
+esac
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking exceptions" >&5
+$as_echo_n "checking exceptions... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $nms_exceptions" >&5
+$as_echo "$nms_exceptions" >&6; }
+if test "$nms_exceptions" != no ; then
+  EXCEPTIONS=yes
+fi
+
 
 ac_config_headers="$ac_config_headers config.h"
 

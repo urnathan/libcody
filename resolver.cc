@@ -129,21 +129,21 @@ Resolver *Resolver::ConnectRequest (Server *s, unsigned version,
 
 int Resolver::ModuleRepoRequest (Server *s)
 {
-  s->ModuleRepoResponse (REPO_DIR);
+  s->PathnameResponse (REPO_DIR);
   return 0;
 }
 
 int Resolver::ModuleExportRequest (Server *s, std::string &module)
 {
   auto cmi = GetCMIName (module);
-  s->ModuleCMIResponse (cmi);
+  s->PathnameResponse (cmi);
   return 0;
 }
 
 int Resolver::ModuleImportRequest (Server *s, std::string &module)
 {
   auto cmi = GetCMIName (module);
-  s->ModuleCMIResponse (cmi);
+  s->PathnameResponse (cmi);
   return 0;
 }
 
@@ -168,14 +168,14 @@ int Resolver::IncludeTranslateRequest (Server *s, std::string &include)
 	{
 	  // Sadly can't easily check if this proces has read access,
 	  // except by trying to open it.
-	  s->ModuleCMIResponse (cmi);
+	  s->PathnameResponse (cmi);
 	  xlate = true;
 	}
       close (fd_dir);
     }
 
   if (!xlate)
-    s->IncludeTranslateResponse (0);
+    s->BoolResponse (false);
 
   return 0;
 }

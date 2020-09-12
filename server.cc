@@ -252,34 +252,19 @@ void Server::ConnectResponse (char const *agent, size_t alen)
   write.EndLine ();
 }
 
-void Server::ModuleRepoResponse (char const *repo, size_t rlen)
+void Server::PathnameResponse (char const *cmi, size_t clen)
 {
   write.BeginLine ();
-  write.AppendWord (u8"MODULE-REPO");
-  write.AppendWord (repo, true, rlen);
-  write.EndLine ();
-}
-
-void Server::ModuleCMIResponse (char const *cmi, size_t clen)
-{
-  write.BeginLine ();
-  write.AppendWord (u8"MODULE-CMI");
+  write.AppendWord (u8"PATHNAME");
   write.AppendWord (cmi, true, clen);
   write.EndLine ();
 }
 
-void Server::IncludeTranslateResponse (bool translate)
+void Server::BoolResponse (bool truthiness)
 {
   write.BeginLine ();
-  write.AppendWord (translate ? u8"INCLUDE-IMPORT" : u8"INCLUDE-TEXT");
-  write.EndLine ();
-}
-
-void Server::InvokedResponse (char const *message, size_t mlen)
-{
-  write.BeginLine ();
-  write.AppendWord (u8"INVOKED");
-  write.AppendWord (message, true, mlen);
+  write.AppendWord (u8"BOOL");
+  write.AppendWord (truthiness ? u8"TRUE" : u8"FALSE");
   write.EndLine ();
 }
 

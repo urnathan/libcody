@@ -30,6 +30,7 @@ void Packet::Create (Packet &&t)
 {
   cat = t.cat;
   code = t.code;
+  request = t.request;
   switch (cat)
     {
     case STRING:

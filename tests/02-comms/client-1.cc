@@ -2,12 +2,12 @@
 // Test client message round tripping
 /*
   RUN: <<HELLO 1 TESTING ;
-  RUN: <<MODULE-REPO REPO ;
-  RUN: <<MODULE-CMI biz/bar ;
-  RUN: <<MODULE-CMI blob ;
-  RUN: <<INCLUDE-TEXT ;
-  RUN: << INCLUDE-IMPORT ;
-  RUN: << MODULE-CMI foo ;
+  RUN: <<PATHNAME REPO ;
+  RUN: <<PATHNAME biz/bar ;
+  RUN: <<PATHNAME blob ;
+  RUN: <<BOOL FALSE ;
+  RUN: << BOOL TRUE ;
+  RUN: << PATHNAME foo ;
   RUN: <<OK
 */
 // RUN: $subdir$stem | ezio -p OUT $test |& ezio -p ERR $test
@@ -27,19 +27,19 @@
 
 // ERR-NEXT:Code:1$
 // ERR-NEXT:Integer:1$
-// ERR-NEXT:Code:3$
-// ERR-NEXT:String:REPO$
-// ERR-NEXT:Code:4$
-// ERR-NEXT:String:biz/bar$
-// ERR-NEXT:Code:4$
-// ERR-NEXT:String:blob$
-// ERR-NEXT:Code:6$
-// ERR-NEXT:Integer:0$
-// ERR-NEXT:Code:6$
-// ERR-NEXT:Integer:1$
-// ERR-NEXT:Code:4$
-// ERR-NEXT:String:foo
 // ERR-NEXT:Code:5$
+// ERR-NEXT:String:REPO$
+// ERR-NEXT:Code:5$
+// ERR-NEXT:String:biz/bar$
+// ERR-NEXT:Code:5$
+// ERR-NEXT:String:blob$
+// ERR-NEXT:Code:4$
+// ERR-NEXT:Integer:0$
+// ERR-NEXT:Code:4$
+// ERR-NEXT:Integer:1$
+// ERR-NEXT:Code:5$
+// ERR-NEXT:String:foo
+// ERR-NEXT:Code:3$
 // ERR-NEXT:Integer:
 // ERR-NEXT:$EOF
 

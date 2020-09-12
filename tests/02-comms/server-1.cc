@@ -16,12 +16,12 @@
 // These all fail because there's nothing in the server interpretting stuff
 /*
   OUT1-NEXT: ^HELLO 1 default	;
-  OUT1-NEXT: ^MODULE-REPO cmi.cache	;
-  OUT1-NEXT: ^MODULE-CMI bar.cmi	;
-  OUT1-NEXT: ^MODULE-CMI foo.cmi	;
+  OUT1-NEXT: ^PATHNAME cmi.cache	;
+  OUT1-NEXT: ^PATHNAME bar.cmi	;
+  OUT1-NEXT: ^PATHNAME foo.cmi	;
   OUT1-NEXT: ^ERROR 'unrecognized \'NOT
-  OUT1-NEXT: ^INCLUDE-TEXT	;
-  OUT1-NEXT: ^INCLUDE-TEXT	;
+  OUT1-NEXT: ^BOOL FALSE	;
+  OUT1-NEXT: ^BOOL FALSE	;
   OUT1-NEXT: ^OK
   OUT1-NEXT: ^ERROR 'malformed
 */

@@ -6,7 +6,7 @@
 // RUN:<<HELLO 1 TEST IDENT
 // RUN: $subdir$stem | ezio -p OUT1 $test |& ezio -p ERR1 $test
 // OUT1-NEXT:HELLO 1 default ;
-// OUT1-NEXT:MODULE-REPO cmi.cache ;
+// OUT1-NEXT:PATHNAME cmi.cache ;
 // OUT1-NEXT:ERROR 'already connected
 // OUT1-NEXT:$EOF
 // ERR1-NEXT:resolver is handler
@@ -18,7 +18,7 @@
 // RUN: $subdir$stem | ezio -p OUT2 $test |& ezio -p ERR2 $test
 // OUT2-NEXT:ERROR 'not connected
 // OUT2-NEXT:HELLO 1 default ;
-// OUT2-NEXT:MODULE-REPO cmi.cache
+// OUT2-NEXT:PATHNAME cmi.cache
 // OUT2-NEXT:$EOF
 // ERR2-NEXT:resolver is handler
 // ERR2-NEXT:$EOF
