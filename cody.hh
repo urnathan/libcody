@@ -5,7 +5,12 @@
 #ifndef CODY_HH
 #define CODY_HH 1
 
-#include "cody-conf.h"
+#if defined(__has_include) && __has_include("cody-conf.h")
+# include "cody-conf.h"
+#else
+# include "cody-conf.h"
+#endif
+
 // C++
 #include <memory>
 #include <string>
