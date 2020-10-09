@@ -60,7 +60,9 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR
   else()
     set(CODY_REVISION, "unknown")
   endif ()
-
+  set(LIBCODY_STANDALONE YES)
+else()
+  set(LIBCODY_STANDALONE NO)
 endif()
 
 # We are using C++11
@@ -71,7 +73,9 @@ option(CODY_CHECKING "Enable checking" ON)
 # Address github issue #10
 option(CODY_WITHEXCEPTIONS "Enable exceptions" OFF)
 
-include(CTest)
+if (LIBCODY_STANDALONE)
+  include(CTest)
+endif()
 
 include(libcody-config-ix)
 
@@ -100,14 +104,14 @@ set(LIBCODY_SOURCES
   packet.cc
   server.cc)
 
-if(add_llvm_component_library)
-  add_llvm_component_library(LLVMcody ${LIBCODY_SOURCES})
-else()
+if(LIBCODY_STANDALONE)
   add_library(cody STATIC ${LIBCODY_SOURCES})
+else()
+  message(STATUS "Configured for in-tree build of libcody as LLVMcody")
+  add_llvm_component_library(LLVMcody ${LIBCODY_SOURCES})
 endif()
 
-if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR
-   OR LIBCODY_STANDALONE_BUILD)
+if (LIBCODY_STANDALONE)
 
   set_target_properties(cody PROPERTIES PUBLIC_HEADER "cody-conf.h;cody.hh")
   install(TARGETS cody 
