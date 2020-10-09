@@ -5,7 +5,6 @@
 #ifndef CODY_HH
 #define CODY_HH 1
 
-#include "cody-conf.h"
 // C++
 #include <memory>
 #include <string>
@@ -13,7 +12,6 @@
 // C
 #include <cstddef>
 // OS
-// FIXME: probably want some goop in cody-conf.h
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
