@@ -41,7 +41,7 @@ clean::
 install::
 	$(INSTALL) -d $(libdir) $(includedir)
 	$(INSTALL) libcody.a $(libdir)
-	$(INSTALL) $(srcdir)/cody.hh $(srcdir)/cody-conf.h $(includedir)
+	$(INSTALL) $(srcdir)/cody.hh $(includedir)
 
 ifeq ($(filter clean%,$(MAKECMDGOALS)),)
 -include $(LIBCODY.O:.o=.d)
