@@ -113,7 +113,7 @@ endif()
 
 if (LIBCODY_STANDALONE)
 
-  set_target_properties(cody PROPERTIES PUBLIC_HEADER "cody-conf.h;cody.hh")
+  set_target_properties(cody PROPERTIES PUBLIC_HEADER "cody.hh")
   install(TARGETS cody 
         LIBRARY DESTINATION lib
         PUBLIC_HEADER DESTINATION include
