@@ -40,7 +40,9 @@ bindir := @bindir@
 libdir := @libdir@
 includedir := @includedir@
 SUBDIRS := @SUBDIRS@
-SHELL := zsh
+# autoconf doesn't seem to like setting SHELL
+SHELL := $(shell which zsh 2>/dev/null >/dev/null && echo zsh \
+  || (echo "No ZSH, maybe flakey" >&2 && echo sh))
 
 # We have to place the -I paths last, so that building will see -I paths to us
 CXX := $(filter-out -I%,@CXX@)
