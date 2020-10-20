@@ -28,12 +28,14 @@ AS_HELP_STRING([--with-toolbin=DIR],[tool bin directory]),
   AC_MSG_ERROR([tool bin location not specified])
 elif test "$withval" = "no" ; then
   :
+elif ! test "$withval" ; then
+  :
 elif ! test -d "${withval%/bin}/bin" ; then
   AC_MSG_ERROR([tool bin not present])
 else
   toolbin=${withval%/bin}/bin
 fi],
-[if test -d $tools/bin ; then
+[if test "$tools" && test -d $tools/bin ; then
   toolbin=$tools/bin
 fi])
 AC_MSG_RESULT($toolbin)

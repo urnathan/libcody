@@ -3,7 +3,7 @@
 # License: Apache v2.0
 
 AC_INIT([codylib],[0.0],[github.com/urnathan/libcody])
-AC_CONFIG_SRCDIR(README.md)
+AC_CONFIG_SRCDIR(cody.hh)
 m4_include(config.m4)
 
 AC_CONFIG_AUX_DIR(build-aux)
