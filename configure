@@ -3148,9 +3148,9 @@ else
 fi
 
 case "$enable_checking" in
-  ("yes") nms_checking=yes ;;
+  (yes|yes,*) nms_checking=yes ;;
   ("no") nms_checking= ;;
-  (*) as_fn_error $? "unknown check \"$enable_check\"" "$LINENO" 5 ;;
+  (*) as_fn_error $? "unknown check \"$enable_checking\"" "$LINENO" 5 ;;
 esac
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking checking" >&5
 printf %s "checking checking... " >&6; }
