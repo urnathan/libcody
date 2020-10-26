@@ -233,8 +233,8 @@ AS_HELP_STRING([--enable-checking],
 [enable run-time checking]),,
 [enable_checking="yes"])
 case "$enable_checking" in
-  (yes|yes,*) nms_checking=yes ;;
-  ("no") nms_checking= ;;
+  (yes|all|yes,*) nms_checking=yes ;;
+  (no|none|release) nms_checking= ;;
   (*) AC_MSG_ERROR([unknown check "$enable_checking"]) ;;
 esac
 AC_MSG_CHECKING([checking])
