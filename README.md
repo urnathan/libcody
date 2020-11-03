@@ -8,10 +8,10 @@ compilers and build systems.
 **WARNING:**  This is preliminary software.
 
 In addition to supporting C++modules, this may also support LTO
-requirements and could also feed deal with generated #include files
+requirements and could also deal with generated #include files
 and feed the compiler with prepruned include paths and whatnot.  (The
 system calls involved in include searches can be quite expensive on
-some build infrastuctures.)
+some build infrastructures.)
 
 * Client and Server objects
 * Direct connection for in-process use
@@ -62,7 +62,7 @@ system, for that kind of thing.<sup><a href="#3">3</a></sup>
 
 Messages characters are encoded in UTF8.
 
-Messages are a sequenc of octets ending with a NEWLINE (0xa).  The lines
+Messages are a sequence of octets ending with a NEWLINE (0xa).  The lines
 consist of a sequence of words, separated by WHITESPACE (0x20 or 0x9).
 Words themselves do not contain WHITESPACE.  Lines consisting solely
 of WHITESPACE (or empty) are ignored.
@@ -106,10 +106,10 @@ It is recommended that words are separated by single SPACE characters.
 
 The message descriptions use `$metavariable` examples.
 
-The request messages are specific to a particlar action.  The response
+The request messages are specific to a particular action.  The response
 messages are more generic, describing their value types, but not their
 meaning.  Message consumers need to know the response to decode them.
-Notice the `Packet::GetRequest()` method records in response packates
+Notice the `Packet::GetRequest()` method records in response packets
 what the request being responded to was.  Do not confuse this with the
 `Packet::GetCode ()` method.
 
@@ -144,15 +144,15 @@ The first message is a handshake:
 
 The `$version` is a numeric value, currently `1`.  `$compiler` identifies
 the compiler &mdash; builders may need to keep compiled modules from
-different compilers separate.  `$ident` is an identifer the builder
-might use to identify the compilation it is communicting with.
+different compilers separate.  `$ident` is an identifier the builder
+might use to identify the compilation it is communicating with.
 
 Responses are:
 
 `HELLO $version $builder`
 
 A successful handshake.  The communication is now connected and other
-messages may be exchanged.  An ERROR response indicates an unsuccesful
+messages may be exchanged.  An ERROR response indicates an unsuccessful
 handshake.  The communication remains unconnected.
 
 There is nothing restricting a handshake to its own message block.  Of
@@ -161,12 +161,12 @@ the block will fail (producing error responses).
 
 ### C++ Module Requests
 
-A set of requests are specific to C++ modules
+A set of requests are specific to C++ modules:
 
 #### Repository
 
 All relative CMI file names are relative to a repository.  (There are
-usually no abosolute CMI files).  The respository may be determined
+usually no absolute CMI files).  The repository may be determined
 with:
 
 `MODULE-REPO`
@@ -229,7 +229,7 @@ themselves.
 
 #### Importing
 
-Importation, inculding that of header-units, uses:
+Importation, including that of header-units, uses:
 
 `MODULE-IMPORT $module`
 
@@ -246,7 +246,7 @@ Include translation can be determined with:
 `INCLUDE-TRANSLATE $header`
 
 The header name, `$header`, is the fully resolved header name, in the
-above-mentioned unambigous filename form.  The response will either be
+above-mentioned unambiguous filename form.  The response will either be
 a BOOL response indicating translation (TRUE) or textual inclusion
 (FALSE).  Alternatively a PATHNAME response can directly name the CMI,
 and implies translation, this possibly elides a subsequent
@@ -266,12 +266,12 @@ A successful invocation provides an OK response.  A failed
 invocation's produces an ERROR response.
 
 FIXME: Note for generalization this command needs to indicate which
-files may need transfering to and from a remote build system.
+files may need transferring to and from a remote build system.
 
 ## Building libCody
 
 Libcody is written in C++11.  (It's a intended for compilers, so
-there'd be a boostrapping problem if it used the latest and greatest.)
+there'd be a bootstrapping problem if it used the latest and greatest.)
 
 ### Using configure and make.
 
