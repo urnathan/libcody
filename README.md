@@ -47,11 +47,15 @@ The protocol is turn-based.  The compiler sends a block of one or more
 requests to the builder, then waits for a block of responses to all of
 those requests.  If the builder needs to compile something to satisfy
 a request, there may be some time before the response.  A builder may
-service multiple compilers concurrently, and it'll need some buffering
-scheme to deal with that.
+service multiple compilers concurrently, each as a separate connection.
 
 When multiple requests are in a block, the responses are also in a
-block, and in corresponding order.
+block, and in corresponding order.  The responses must not be
+commenced eagerly -- they must wait until the incoming block has ended
+(as mentioned above, it is turn-based).  To do otherwise risks
+deadlock, as there is no requirement for a sending end of the
+communication to listen for incoming responses (or new requests) until
+it has completed sending its current block.
 
 Every request has a response.
 
