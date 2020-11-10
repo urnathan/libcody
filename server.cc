@@ -186,7 +186,7 @@ int ModuleRepoRequest (Server *s, Resolver *r,std::vector<std::string> &words)
 int ModuleExportRequest (Server *s, Resolver *r, std::vector<std::string> &words)
 {
   if (words.size () != 2 || words[1].empty ())
-    return EINVAL;
+    return -1;
 
   return r->ModuleExportRequest (s, words[1]);
 }
@@ -196,7 +196,7 @@ int ModuleImportRequest (Server *s, Resolver *r, std::vector<std::string> &words
   if (words.size () != 2 || words[1].empty ())
     return -1;
 
-  return r->ModuleExportRequest (s, words[1]);
+  return r->ModuleImportRequest (s, words[1]);
 }
 
 int ModuleCompiledRequest (Server *s, Resolver *r,
