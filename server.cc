@@ -196,10 +196,6 @@ int ModuleRepoRequest (Server *s, Resolver *r,std::vector<std::string> &words)
 
 int ModuleExportRequest (Server *s, Resolver *r, std::vector<std::string> &words)
 {
-<<<<<<< HEAD
-  if (words.size () != 2 || words[1].empty ())
-    return -1;
-=======
   if (words.size () < 2 || words.size () > 3 || words[1].empty ())
     return -1;
 
@@ -211,7 +207,6 @@ int ModuleExportRequest (Server *s, Resolver *r, std::vector<std::string> &words
 	return -1;
       flags = Flags (val);
     }
->>>>>>> Add $flags to several requests and handshake
 
   return r->ModuleExportRequest (s, flags, words[1]);
 }
@@ -221,9 +216,6 @@ int ModuleImportRequest (Server *s, Resolver *r, std::vector<std::string> &words
   if (words.size () < 2 || words.size () > 3 || words[1].empty ())
     return -1;
 
-<<<<<<< HEAD
-  return r->ModuleImportRequest (s, words[1]);
-=======
   Flags flags = Flags::None;
   if (words.size () == 3)
     {
@@ -234,7 +226,6 @@ int ModuleImportRequest (Server *s, Resolver *r, std::vector<std::string> &words
     }
 
   return r->ModuleImportRequest (s, flags, words[1]);
->>>>>>> Add $flags to several requests and handshake
 }
 
 int ModuleCompiledRequest (Server *s, Resolver *r,
