@@ -153,7 +153,7 @@ might use to identify the compilation it is communicating with.
 
 Responses are:
 
-`HELLO $version $builder`
+`HELLO $version $builder [$flags]`
 
 A successful handshake.  The communication is now connected and other
 messages may be exchanged.  An ERROR response indicates an unsuccessful
@@ -163,9 +163,30 @@ There is nothing restricting a handshake to its own message block.  Of
 course, if the handshake fails, subsequent non-handshake messages in
 the block will fail (producing error responses).
 
+The `$flags` word, if present allows a server to control what requests
+might be given.  See below.
+
 ### C++ Module Requests
 
 A set of requests are specific to C++ modules:
+
+#### Flags
+
+Several requests and one response have an optional `$flags` word.
+These are the `Cody::Flags` value pertaining to that request.  If
+omitted the value 0 is implied.  The following flags are available:
+
+* `0`, `None`: No flags.
+
+* `1<<0`, `NameOnly`: The request is for the name only, and not the
+  CMI contents.
+
+The `NameOnly` flag may be provded in a handshake response, and
+indicates that the server is interested in requests only for their
+implied dependency information.  It may be provided on a request to
+indicate that only the CMI name is required, not its contents (for
+instance, when preprocessing).  Note that a compiler may still make
+`NameOnly` requests even if the server did not ask for such.
 
 #### Repository
 
@@ -176,17 +197,21 @@ with:
 `MODULE-REPO`
 
 A PATHNAME response is expected.  The `$pathname` may be an empty
-word, which is equivalent to `.`.
+word, which is equivalent to `.`.  When the response is a relative
+pathname, it must be relative to the client's current working
+directory (which might be a process on a different host to the
+server).  You may set the repository to `/`, if you with to use paths
+relative to the root directory.
 
 #### Exporting
 
 A compilation of a module interface, partition or header unit can
 inform the builder with:
 
-`MODULE-EXPORT $module`
+`MODULE-EXPORT $module [$flags]`
 
-This will result in a PATHNAME response naming the Compiled Module Interface
-pathname to write.
+This will result in a PATHNAME response naming the Compiled Module
+Interface pathname to write.
 
 The `MODULE-EXPORT` request does not indicate the module has been
 successfully compiled.  At most one `MODULE-EXPORT` is to be made, and
@@ -217,9 +242,7 @@ spelling a particular header-unit to a unique CMI file.
 
 Successful compilation of an interface is indicated with a subsequent:
 
-`MODULE-COMPILED $module`
-
-FIXME: do we need the module here?
+`MODULE-COMPILED $module [$flags]`
 
 request.  This indicates the CMI file has been written to disk, so
 that any other compilations waiting on it may proceed.  Depending on
@@ -235,7 +258,7 @@ themselves.
 
 Importation, including that of header-units, uses:
 
-`MODULE-IMPORT $module`
+`MODULE-IMPORT $module [$flags]`
 
 A PATHNAME response names the CMI file to be read.  Should the builder
 have to invoke a compilation to produce the CMI, the response should
@@ -247,7 +270,7 @@ presumably fail in some manner.
 
 Include translation can be determined with:
 
-`INCLUDE-TRANSLATE $header`
+`INCLUDE-TRANSLATE $header [$flags]`
 
 The header name, `$header`, is the fully resolved header name, in the
 above-mentioned unambiguous filename form.  The response will either be
