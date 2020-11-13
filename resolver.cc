@@ -10,7 +10,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#if defined (__unix__) || defined (__MACH__)
+#if defined (__unix__) || (defined (__Apple__) && \
+   (defined (__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__) && \
+    __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 101000))
 // Autoconf test?
 #define HAVE_FSTATAT 1
 #else
