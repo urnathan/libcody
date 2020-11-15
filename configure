@@ -1990,9 +1990,11 @@ $as_echo "$as_me: Using tools in $tools" >&6;}
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking number of CPUs" >&5
 $as_echo_n "checking number of CPUs... " >&6; }
-case $build in
-     (*-*-darwin*) NUM_CPUS=$(sysctl -n hw.ncpu 2>/dev/null) ;;
-     (*) NUM_CPUS=$(grep -c '^processor' /proc/cpuinfo 2>/dev/null) ;;
+case $build in #(
+  *-*-darwin*) :
+    NUM_CPUS=$(sysctl -n hw.ncpu 2>/dev/null) ;; #(
+  *) :
+    NUM_CPUS=$(grep -c '^processor' /proc/cpuinfo 2>/dev/null) ;;
 esac
 test "$NUM_CPUS" = 0 && NUM_CPUS=
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${NUM_CPUS:-unknown}" >&5
@@ -2006,10 +2008,13 @@ else
   enable_maintainer_mode=no
 fi
 
-case "$enable_maintainer_mode" in
-  ("yes") maintainer_mode=yes ;;
-  ("no") maintainer=no ;;
-  (*) as_fn_error $? "unknown maintainer mode $enable_maintainer_mode" "$LINENO" 5 ;;
+case $enable_maintainer_mode in #(
+  yes) :
+    maintainer_mode=yes ;; #(
+  no) :
+    maintainer=no ;; #(
+  *) :
+    as_fn_error $? "unknown maintainer mode $enable_maintainer_mode" "$LINENO" 5 ;;
 esac
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking maintainer-mode" >&5
 $as_echo_n "checking maintainer-mode... " >&6; }
@@ -2680,13 +2685,14 @@ $as_echo_n "checking bugurl... " >&6; }
 
 # Check whether --with-bugurl was given.
 if test "${with_bugurl+set}" = set; then :
-  withval=$with_bugurl; if test "$withval" = "yes" ; then
-  as_fn_error $? "URL not specified" "$LINENO" 5
-elif test "$withval" = "no" ; then
-  BUGURL=""
-else
-  BUGURL="${withval}"
-fi
+  withval=$with_bugurl; case "$withval" in #(
+  yes) :
+    as_fn_error $? "--with-bugurl requires an argument" "$LINENO" 5 ;; #(
+  no) :
+    BUGURL="" ;; #(
+  *) :
+    BUGURL="${withval}" ;;
+esac
 else
   BUGURL="${PACKAGE_BUGREPORT}"
 fi
@@ -2705,10 +2711,13 @@ else
   enable_checking="yes"
 fi
 
-case "$enable_checking" in
-  (yes|all|yes,*) nms_checking=yes ;;
-  (no|none|release) nms_checking= ;;
-  (*) as_fn_error $? "unknown check \"$enable_checking\"" "$LINENO" 5 ;;
+case $enable_checking in #(
+  yes|all|yes,*) :
+    nms_checking=yes ;; #(
+  no|none|release) :
+    nms_checking= ;; #(
+  *) :
+    as_fn_error $? "unknown check \"$enable_checking\"" "$LINENO" 5 ;;
 esac
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking checking" >&5
 $as_echo_n "checking checking... " >&6; }
@@ -2728,10 +2737,13 @@ else
   enable_exceptions="no"
 fi
 
-case "$enable_exceptions" in
-  ("yes") nms_exceptions=yes ;;
-  ("no") nms_exceptions=no ;;
-  (*) as_fn_error $? "unknown exceptions $enable_exceptions" "$LINENO" 5 ;;
+case $enable_exceptions in #(
+  yes) :
+    nms_exceptions=yes ;; #(
+  no) :
+    nms_exceptions=no ;; #(
+  *) :
+    as_fn_error $? "unknown exceptions $enable_exceptions" "$LINENO" 5 ;;
 esac
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking exceptions" >&5
 $as_echo_n "checking exceptions... " >&6; }
