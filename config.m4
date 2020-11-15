@@ -7,42 +7,24 @@ AC_DEFUN([NMS_NOT_IN_SOURCE],
 AC_MSG_ERROR([Do not build in the source tree.  Reasons])
 fi])
 
+# thanks to Zack Weinberg for fixing this!
 AC_DEFUN([NMS_TOOLS],
-[AC_MSG_CHECKING([tools])
+[AC_SUBST([tools], [])
 AC_ARG_WITH([tools],
-AS_HELP_STRING([--with-tools=DIR],[tool directory]),
-[if test "$withval" = "yes" ; then
-  AC_MSG_ERROR([tool location not specified])
-elif test "$withval" = "no" ; then
-  :
-elif ! test -d "${withval%/bin}" ; then
-  AC_MSG_ERROR([tools not present])
-else
-  tools=${withval%/bin}
+  AS_HELP_STRING([--with-tools=DIR],[tool directory]),
+  [AS_CASE([$withval],
+    [yes], [AC_MSG_ERROR([--with-tools requires an argument])],
+    [no], [:],
+    [tools="${withval%/bin}"])])
+
+if test -n "$tools" ; then
+  if test -d "$tools/bin"; then
+    PATH="$tools/bin:$PATH"
+    AC_MSG_NOTICE([Using tools in $tools])
+  else
+    AC_MSG_ERROR([tool location does not exist])
+  fi
 fi])
-AC_MSG_RESULT($tools)
-AC_MSG_CHECKING([tool binaries])
-AC_ARG_WITH([toolbin],
-AS_HELP_STRING([--with-toolbin=DIR],[tool bin directory]),
-[if test "$withval" = "yes" ; then
-  AC_MSG_ERROR([tool bin location not specified])
-elif test "$withval" = "no" ; then
-  :
-elif ! test "$withval" ; then
-  :
-elif ! test -d "${withval%/bin}/bin" ; then
-  AC_MSG_ERROR([tool bin not present])
-else
-  toolbin=${withval%/bin}/bin
-fi],
-[if test "$tools" && test -d $tools/bin ; then
-  toolbin=$tools/bin
-fi])
-AC_MSG_RESULT($toolbin)
-if test "$toolbin" ; then
-  PATH="$toolbin:$PATH"
-fi
-AC_SUBST(toolbin)])
 
 AC_DEFUN([NMS_TOOL_DIRS],
 [if test "$tools" && test -d "$tools/include" ; then
