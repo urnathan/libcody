@@ -206,7 +206,7 @@ int Resolver::IncludeTranslateRequest (Server *s, std::string &include)
 int Resolver::ModuleExportRequest (Server *s, Flags, std::string &module)
 {
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   return ModuleExportRequest (s, module);
 #pragma GCC diagnostic pop
 }
@@ -214,7 +214,7 @@ int Resolver::ModuleExportRequest (Server *s, Flags, std::string &module)
 int Resolver::ModuleImportRequest (Server *s, Flags, std::string &module)
 {
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   return ModuleImportRequest (s, module);
 #pragma GCC diagnostic pop
 }
@@ -222,7 +222,7 @@ int Resolver::ModuleImportRequest (Server *s, Flags, std::string &module)
 int Resolver::ModuleCompiledRequest (Server *s, Flags, std::string &module)
 {
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   return ModuleCompiledRequest (s, module);
 #pragma GCC diagnostic pop
 }
@@ -230,7 +230,7 @@ int Resolver::ModuleCompiledRequest (Server *s, Flags, std::string &module)
 int Resolver::IncludeTranslateRequest (Server *s, Flags, std::string &include)
 {
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated"
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   return IncludeTranslateRequest (s, include);
 #pragma GCC diagnostic pop
 }
