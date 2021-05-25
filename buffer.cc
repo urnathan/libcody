@@ -383,5 +383,10 @@ void MessageBuffer::LexedLine (std::string &str)
       str.append (&buffer[pos], end - pos);
     }
 }
+
+void MessageBuffer::Space ()
+{
+  Append (Detail::S2C(u8" "));
+}
 } // Detail
 } // Cody
