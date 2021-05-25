@@ -106,7 +106,7 @@ public:
   /// Add whitespace word separator.  Multiple adjacent whitespace is fine.
   void Space ()
   {
-    Append (Detail::S2C(u8" "));
+    Append (Detail::S2C(" "));
   }
 
 public:
