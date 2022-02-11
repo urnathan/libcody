@@ -97,7 +97,7 @@ int Client::CommunicateWithServer ()
 
 static Packet CommunicationError (int err)
 {
-  std::string e {u8"communication error:"};
+  std::string e {u8"communication error: "};
   e.append (strerror (err));
 
   return Packet (Client::PC_ERROR, std::move (e));
