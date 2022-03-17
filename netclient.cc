@@ -74,6 +74,13 @@ int OpenInet6 (char const **e, char const *name, int port)
   int fd = -1;
   char const *errstr = nullptr;
 
+  if (!name || name[0] == 0)
+    {
+      errstr = "missing server name";
+      errno = EINVAL;
+      goto fail;
+    }
+
   fd = socket (AF_INET6, SOCK_STREAM, 0);
   if (fd < 0)
     {
@@ -92,7 +99,7 @@ int OpenInet6 (char const **e, char const *name, int port)
     }
 
   addrinfo hints;
-  hints.ai_flags = AI_NUMERICSERV;
+  hints.ai_flags = 0;
   hints.ai_family = AF_INET6;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_protocol = 0;
@@ -101,9 +108,7 @@ int OpenInet6 (char const **e, char const *name, int port)
   hints.ai_canonname = nullptr;
   hints.ai_next = nullptr;
 
-  /* getaddrinfo requires a port number, but is quite happy to accept
-     invalid ones.  So don't rely on it.  */
-  if (int err = getaddrinfo (name, "0", &hints, &addrs))
+  if (int err = getaddrinfo (name, nullptr, &hints, &addrs))
     {
       errstr = gai_strerror (err);
       // What's the best errno to set?
